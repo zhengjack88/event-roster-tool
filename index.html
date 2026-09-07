@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
- <title>Event Check-In & Searchable Roster Tool</title>
+ <title>赛事志愿者物资与名单核验工具</title>
  <style> * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; }
  body { background: #f1f5f9; padding: 16px; color: #1e293b; }
  .container { max-width: 540px; margin: 0 auto; }
@@ -63,33 +63,33 @@
 <div class="container">
  
  <div style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:12px; font-size:13px;">
-  <span style="font-weight:bold; color:#0f172a;">English</span>
+  <a href="index.html" style="color:#2563eb; text-decoration:none; font-weight:500;">English</a>
   <span style="color:#cbd5e1;">|</span>
-  <a href="index_zh.html" style="color:#2563eb; text-decoration:none; font-weight:500;">简体中文</a>
+  <span style="font-weight:bold; color:#0f172a;">简体中文</span>
  </div>
 <div class="header">
- <h1>Event Check-In & Searchable Roster</h1>
- <p>Instant Search: Name / Last 4 Digits / Bib Number</p>
+ <h1>赛事志愿者物资与名单核验系统</h1>
+ <p>即时极速检索：姓名 / 手机或证件后4位 / 号码布</p>
  </div>
  <div class="search-sticky">
   <div class="search-box">
-   <input type="search" id="query" placeholder="Search name, bib, or last 4 digits..." autocomplete="off">
-   <button class="btn-search" onclick="search()">Search</button>
- <button class="btn-search" style="background:#10b981; margin-left:4px;" onclick="openAddModal()">+ Add</button>
+   <input type="search" id="query" placeholder="输入姓名、号码布、手机或证件后4位..." autocomplete="off">
+   <button class="btn-search" onclick="search()">查询</button>
+ <button class="btn-search" style="background:#10b981; margin-left:4px;" onclick="openAddModal()">+ 新增</button>
   </div>
  </div>
 
  <div class="section-bar">
-  <span>Staging Queue (<span id="stage-count">0</span>)</span>
-  <span class="clear-link" onclick="clearStaged()">Clear Staged</span>
+  <span>核验暂存区 (<span id="stage-count">0</span>)</span>
+  <span class="clear-link" onclick="clearStaged()">清空暂存</span>
  </div>
  <div class="staged-box" id="staged-container">
-  <span style="font-size:12px; color:#94a3b8;">No staged records. Click "Stage" on cards below.</span>
+  <span style="font-size:12px; color:#94a3b8;">暂无暂存记录。点击下方卡片上的“暂存”即可加入。</span>
  </div>
 
  <div class="section-bar">
-  <span>Search History</span>
-  <span class="clear-link" onclick="clearHistory()">Clear History</span>
+  <span>搜索历史</span>
+  <span class="clear-link" onclick="clearHistory()">清空历史</span>
  </div>
  <div class="tags-wrap" id="history-box"></div>
 
@@ -99,31 +99,31 @@
 <div class="modal-overlay" id="addModal">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title">+ Add New Record</span>
+      <span class="modal-title">+ 新增登记记录</span>
       <button class="close-modal" onclick="closeAddModal()">&times;</button>
     </div>
     <div class="form-group">
-      <label class="form-label">Full Name *</label>
-      <input type="text" id="new-name" class="form-input" placeholder="e.g. John Doe">
+      <label class="form-label">真实姓名 *</label>
+      <input type="text" id="new-name" class="form-input" placeholder="例如：张三">
     </div>
     <div class="form-group">
-      <label class="form-label">Bib / ID Number *</label>
+      <label class="form-label">号码布 / 序号 *</label>
       <input type="text" id="new-bib" class="form-input" placeholder="e.g. 2001">
     </div>
     <div class="form-group">
-      <label class="form-label">Phone Number</label>
+      <label class="form-label">联系电话</label>
       <input type="text" id="new-phone" class="form-input" placeholder="e.g. 555-0199">
     </div>
     <div class="form-group">
-      <label class="form-label">Doc / Identifier</label>
+      <label class="form-label">身份证 / 证件号</label>
       <input type="text" id="new-id" class="form-input" placeholder="e.g. DOC-88231">
     </div>
     <div class="form-group">
-      <label class="form-label">Size / Category</label>
+      <label class="form-label">物资尺码 / 规格</label>
       <input type="text" id="new-size" class="form-input" placeholder="e.g. XL, M, VIP">
     </div>
     <div class="form-actions">
-      <button class="btn-cancel" onclick="closeAddModal()">Cancel</button>
+      <button class="btn-cancel" onclick="closeAddModal()">取消</button>
       <button class="btn-save" onclick="saveNewRecord()">Save & Index</button>
     </div>
   </div>
@@ -240,7 +240,7 @@ function renderStaged() {
  const count = document.getElementById('stage-count');
  count.textContent = staged.length;
  if (staged.length === 0) {
-  box.innerHTML = '<span style="font-size:12px; color:#94a3b8;">No staged records. Click "Stage" on cards below.</span>';
+  box.innerHTML = '<span style="font-size:12px; color:#94a3b8;">暂无暂存记录。点击下方卡片上的“暂存”即可加入。</span>';
   // 更新所有卡片按钮为未暂存状态
   document.querySelectorAll('.btn-stage').forEach(b => {
    b.classList.remove('btn-staged'); b.textContent = 'Stage';
@@ -324,6 +324,213 @@ function clearHistory() {
 // 初始化暂存夹与历史
 renderStaged();
 renderHistory();
+
+// 本地持久化支持
+let savedRoster = localStorage.getItem('roster_data');
+if (savedRoster) {
+  try { roster = JSON.parse(savedRoster); } catch(e) {}
+}
+
+function saveRoster() {
+  localStorage.setItem('roster_data', JSON.stringify(roster));
+}
+
+// 删除功能
+function deleteRecord(bib) {
+  const target = roster.find(r => r.bib === bib);
+  const name = target ? target.name : bib;
+  if (confirm(`确定要删除记录【${name} (号码布:${bib})】吗？`)) {
+    roster = roster.filter(r => r.bib !== bib);
+    removeStaged(bib);
+    saveRoster();
+    search(document.getElementById('query').value);
+  }
+}
+
+// 修改原有的 saveNewRecord 支持持久化
+const oldSaveNewRecord = saveNewRecord;
+saveNewRecord = function() {
+  oldSaveNewRecord();
+  saveRoster();
+};
+
+// CSV 智能解析与映射导入
+let parsedCsvRows = [];
+let csvHeaders = [];
+
+function openCsvModal() {
+  document.getElementById('csv-modal').classList.add('active');
+  document.getElementById('csv-file-input').value = '';
+  document.getElementById('csv-mapping-area').style.display = 'none';
+  document.getElementById('btn-do-import').style.display = 'none';
+}
+
+function closeCsvModal() {
+  document.getElementById('csv-modal').classList.remove('active');
+}
+
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (lines.length === 0) return { headers: [], rows: [] };
+  
+  function parseLine(line) {
+    const row = [];
+    let inQuotes = false;
+    let entry = '';
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') {
+        inQuotes = !inQuotes;
+      } else if (c === ',' && !inQuotes) {
+        row.push(entry.trim());
+        entry = '';
+      } else {
+        entry += c;
+      }
+    }
+    row.push(entry.trim());
+    return row;
+  }
+
+  const headers = parseLine(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = parseLine(lines[i]);
+    if (vals.length === headers.length) {
+      rows.push(vals);
+    }
+  }
+  return { headers, rows };
+}
+
+function handleCsvFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const content = evt.target.result;
+    const parsed = parseCSV(content);
+    csvHeaders = parsed.headers;
+    parsedCsvRows = parsed.rows;
+
+    if (csvHeaders.length === 0 || parsedCsvRows.length === 0) {
+      alert('CSV 文件内容为空或格式无效！');
+      return;
+    }
+
+    setupMappingSelects(csvHeaders);
+    document.getElementById('csv-mapping-area').style.display = 'block';
+    document.getElementById('btn-do-import').style.display = 'inline-block';
+    document.getElementById('csv-preview-text').innerText = `已解析 ${parsedCsvRows.length} 条数据，系统已自动推测匹配列，请核对无误后点击下方按钮导入。`;
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function setupMappingSelects(headers) {
+  const fields = ['name', 'bib', 'phone', 'id', 'size'];
+  fields.forEach(f => {
+    const sel = document.getElementById('map-' + f);
+    sel.innerHTML = '<option value="">-- 请选择或不导入 --</option>' +
+      headers.map((h, idx) => `<option value="${idx}">${h}</option>`).join('');
+    
+    // 智能识别表头
+    headers.forEach((h, idx) => {
+      const hl = h.toLowerCase();
+      if (f === 'name' && (hl.includes('名') || hl.includes('name') || hl.includes('选手') || hl.includes('姓名'))) sel.value = idx;
+      if (f === 'bib' && (hl.includes('布') || hl.includes('bib') || hl.includes('号') || hl.includes('no') || hl.includes('序号') || hl.includes('编号'))) sel.value = idx;
+      if (f === 'phone' && (hl.includes('电') || hl.includes('话') || hl.includes('phone') || hl.includes('mobile') || hl.includes('手机') || hl.includes('联系'))) sel.value = idx;
+      if (f === 'id' && (hl.includes('证') || hl.includes('id') || hl.includes('card') || hl.includes('身份'))) sel.value = idx;
+      if (f === 'size' && (hl.includes('尺') || hl.includes('码') || hl.includes('size') || hl.includes('物') || hl.includes('规格') || hl.includes('衣服'))) sel.value = idx;
+    });
+  });
+}
+
+function confirmCsvImport() {
+  const nameIdx = document.getElementById('map-name').value;
+  const bibIdx = document.getElementById('map-bib').value;
+  const phoneIdx = document.getElementById('map-phone').value;
+  const idIdx = document.getElementById('map-id').value;
+  const sizeIdx = document.getElementById('map-size').value;
+
+  if (nameIdx === '' || bibIdx === '') {
+    alert('姓名和号码布是必填字段，请在下拉框中选择对应的列！');
+    return;
+  }
+
+  let addedCount = 0;
+  parsedCsvRows.forEach(row => {
+    const name = row[nameIdx] || '';
+    const bib = row[bibIdx] || '';
+    const phone = phoneIdx !== '' ? (row[phoneIdx] || '') : '';
+    const id = idIdx !== '' ? (row[idIdx] || '') : '';
+    const size = sizeIdx !== '' ? (row[sizeIdx] || '') : '';
+
+    if (name && bib) {
+      const existingIdx = roster.findIndex(r => r.bib === bib);
+      if (existingIdx >= 0) {
+        roster[existingIdx] = { no: roster[existingIdx].no, bib, name, phone, id, size };
+      } else {
+        roster.push({ no: String(roster.length + 1), bib, name, phone, id, size });
+      }
+      addedCount++;
+    }
+  });
+
+  saveRoster();
+  closeCsvModal();
+  search(document.getElementById('query').value);
+  alert(`成功导入/更新 ${addedCount} 条选手数据！`);
+}
+
 </script>
+
+<!-- CSV Import Modal with Smart Column Mapping -->
+<div id="csv-modal" class="modal-overlay">
+  <div class="modal" style="max-width:520px;">
+    <h3 style="margin-bottom:8px;">批量导入 CSV 名单</h3>
+    <p style="font-size:0.85rem; color:#64748b; margin-bottom:12px;">
+      💡 <strong>不用担心表头不同：</strong>上传任意系统导出的 CSV，本系统会自动识别表头，并支持手动调整字段映射！
+    </p>
+    
+    <div class="form-group">
+      <label>选择 CSV 文件 (.csv)</label>
+      <input type="file" id="csv-file-input" accept=".csv, .txt" class="form-control" onchange="handleCsvFile(event)">
+    </div>
+
+    <div id="csv-mapping-area" style="display:none; margin-top:14px; border-top:1px solid #e2e8f0; padding-top:12px;">
+      <div style="font-weight:600; font-size:0.9rem; margin-bottom:8px; color:#334155;">
+        请确认表格列对应关系（自动推测）：
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.88rem;">
+        <span>姓名 (必填):</span>
+        <select id="map-name" class="form-control" style="width:200px; padding:4px 8px;"></select>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.88rem;">
+        <span>号码布 / 序号 (必填):</span>
+        <select id="map-bib" class="form-control" style="width:200px; padding:4px 8px;"></select>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.88rem;">
+        <span>手机号:</span>
+        <select id="map-phone" class="form-control" style="width:200px; padding:4px 8px;"></select>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.88rem;">
+        <span>身份证 / 证件号:</span>
+        <select id="map-id" class="form-control" style="width:200px; padding:4px 8px;"></select>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.88rem;">
+        <span>物资尺码:</span>
+        <select id="map-size" class="form-control" style="width:200px; padding:4px 8px;"></select>
+      </div>
+      <div id="csv-preview-text" style="font-size:0.85rem; color:#10b981; margin-top:8px; font-weight:500;"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeCsvModal()">取消</button>
+      <button id="btn-do-import" class="btn btn-success" style="display:none;" onclick="confirmCsvImport()">确认导入并保存</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
