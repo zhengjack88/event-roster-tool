@@ -1,13 +1,39 @@
-# Event Roster Verification Tool / 赛事物资及名单核验工具
+# Event Roster & Material Distribution Tool
 
-A lightweight, bilingual (English / 中文) offline web tool for volunteer logistics and participant verification.
+[简体中文](README_zh.md) | [Live Demo / GitHub Pages](https://zhengjack88.github.io/event-roster-tool/)
 
-## Features / 功能特性
-- **Bilingual Interface (双语界面)**: Seamless toggle between English and Simplified Chinese (中英双语即时切换).
-- **Fast Search (毫秒级检索)**: Instant fuzzy search by Bib No., Full Name, Phone No., or ID card (支持按参赛号、姓名、手机尾号、证件号快速匹配).
-- **Offline & Standalone (单文件纯离线)**: No backend required, runs directly in any browser (纯前端单文件运行，离线即用).
-- **Data Privacy (隐私安全)**: Completely private and self-contained.
+A lightweight, single-file HTML web tool designed for event volunteers to verify participant rosters, distribute materials, and check clothing sizes on-site (marathons, trail runs, cycling races, etc.).
 
-## Usage / 使用方法
-Simply clone or download this repository, and open `index.html` in any web browser.
-直接在任意浏览器打开 `index.html` 即可使用。
+## Key Features
+
+- 🚀 **Single File & Zero Dependency**: Pure HTML/CSS/JS. No backend server or database required.
+- 🌐 **Bilingual Support**: Real-time language switcher (English / 简体中文).
+- 🔍 **Instant Multi-Field Search**: Search by Bib Number, Participant Name, Phone Number, or National ID.
+- 📦 **Size Filter & Real-Time Stats**: Filter by clothing size (S, M, L, XL, 2XL, etc.) with dynamic count.
+- 🖨️ **Print Optimized**: One-click reset, clean print styles, and mobile responsiveness.
+- 🔒 **100% Client-Side Privacy**: Runs completely offline in the browser. Zero telemetry or data leakage.
+
+## Quick Start
+
+### Option 1: Live Demo
+Access directly via GitHub Pages:
+👉 **[https://zhengjack88.github.io/event-roster-tool/](https://zhengjack88.github.io/event-roster-tool/)**
+
+### Option 2: Local Offline
+1. Download `index.html`.
+2. Double click to open in any web browser.
+
+## Customizing Roster Data
+
+Open `index.html` in any text editor, locate `const roster = [...]` in the `<script>` tag, and replace with your own event participant records:
+
+```javascript
+const roster = [
+  { no: "1", bib: "1001", name: "John Doe", phone: "13800138001", id: "110101199001011234", size: "L" },
+  { no: "2", bib: "1002", name: "Jane Smith", phone: "13800138002", id: "310101199202022345", size: "M" }
+];
+```
+
+## License
+
+MIT License
