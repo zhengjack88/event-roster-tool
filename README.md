@@ -25,3 +25,15 @@ This project is licensed under a **Proprietary Source-Available License**:
 - **Free for Personal/Event Use**: Free to inspect, download, and use for personal or volunteer non-commercial events.
 - **No Reselling / Commercialization**: **Third parties are strictly prohibited from selling, reselling, or embedding this software into paid commercial products.**
 - **Exclusive Commercial Rights**: The author (**zhengjack88**) holds the **sole and exclusive right** to commercially sell, resell, or license this software.
+
+---
+
+## 🎗️ Public Welfare & Volunteer Initiative
+
+> *"Small acts, multiplied by many, can transform the world."*  
+> 
+> This project warmly welcomes all **charity runs, sports events, non-profit foundations, and volunteer communities** for free adoption.  
+> The author is honored to provide **unconditional technical assistance and tailoring support** for any verified public-welfare activities.  
+> 
+> If this tool contributes to the smooth operation of your noble cause, **a formal volunteer certificate or letter of appreciation upon the event's completion would be deeply treasured and appreciated** as a humble token of partnership.  
+> *Contact: Feel free to reach out via GitHub Issues or author profile.*
