@@ -1,8 +1,13 @@
 # 赛事志愿者物资与选手名单核验工具 (Event Roster Tool)
 
-[English](README.md) | [在线演示 / GitHub Pages](https://zhengjack88.github.io/event-roster-tool/)
+[English](README.md) | [在线演示 (默认英文)](https://zhengjack88.github.io/event-roster-tool/) | [在线演示 (中文版)](https://zhengjack88.github.io/event-roster-tool/index_zh.html)
 
 一个开箱即用、轻量且支持离线运行的单文件 HTML 工具，专为马拉松、越野赛、骑行等各类体育赛事的现场志愿者物资发放、身份核对而设计。
+
+## 页面版本
+
+- `index.html`：默认英文（支持右上角中英双语即时切换）
+- `index_zh.html`：默认中文版（进入直接呈现中文界面）
 
 ## 核心特性
 
@@ -16,16 +21,16 @@
 ## 快速使用
 
 ### 方式 1：在线访问
-直接访问 GitHub Pages 演示站点：
-👉 **[https://zhengjack88.github.io/event-roster-tool/](https://zhengjack88.github.io/event-roster-tool/)**
+- [在线演示 (默认英文)](https://zhengjack88.github.io/event-roster-tool/)
+- [在线演示 (直接中文)](https://zhengjack88.github.io/event-roster-tool/index_zh.html)
 
 ### 方式 2：本地离线运行
-1. 下载仓库中的 `index.html`。
+1. 下载仓库中的 `index_zh.html` 或 `index.html`。
 2. 直接双击用任意浏览器打开即可。
 
-## 如何替换为你赛事的真实名单
+## 如何替换为您赛事的真实名单
 
-用文本编辑器打开 `index.html`，定位到 `<script>` 标签中的 `const roster = [...]`，替换为您赛事的真实数据即可：
+用文本编辑器打开 html 文件，定位到 `<script>` 标签中的 `const roster = [...]`，替换为您赛事的真实数据即可：
 
 ```javascript
 const roster = [
@@ -34,6 +39,12 @@ const roster = [
 ];
 ```
 
-## 开源协议
+## 知识产权与商业授权声明 (License & Terms)
 
-MIT License
+本项目采用 **专有源码开放与非商业授权协议（Source-Available Proprietary License）**：
+
+1. **允许个人/非商业使用**：任何人均可免费查看源码、下载并在赛事志愿者工作中免费使用。
+2. **禁止未经许可的转售/商用**：**严禁任何第三方以任何形式直接转卖本软件、二次打包收费、或将其整合进付费商业服务。**
+3. **商业转售唯一独占权**：**仅原作者（zhengjack88）拥有本软件及其衍生版本的商业销售、转售、商业再授权与盈利变现的唯一独占权。**
+
+如有商业定制或批量商用需求，请联系原作者。
