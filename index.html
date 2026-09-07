@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
  <title>赛事志愿者物资与名单核验工具</title>
@@ -12,7 +16,12 @@
  .header p { font-size: 13px; color: #64748b; }
 
  .search-sticky { position: sticky; top: 8px; z-index: 100; background: #f8fafc; padding-bottom: 8px; }
- .search-box { display: flex; gap: 8px; }
+ .search-box { display: flex; gap: 8px; margin-bottom: 10px; }
+    .action-toolbar { display: flex; gap: 10px; margin-bottom: 14px; width: 100%; }
+    .btn-action { flex: 1; padding: 12px 10px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.06); }
+    .btn-action:active { opacity: 0.85; }
+    .btn-add { background: #10b981; color: #fff; }
+    .btn-csv { background: #0284c7; color: #fff; }
  input { flex: 1; padding: 12px 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 16px; outline: none; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
  input:focus { border-color: #2563eb; }
  .btn-search { padding: 0 16px; background: #2563eb; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
@@ -69,15 +78,17 @@
  </div>
 <div class="header">
  <h1>赛事志愿者物资与名单核验系统</h1>
- <p>即时极速检索：姓名 / 手机或证件后4位 / 号码布</p>
+ <p>即时极速检索：姓名 / 手机或证件后4位 / 编号/号码布</p>
  </div>
  <div class="search-sticky">
   <div class="search-box">
-   <input type="search" id="query" placeholder="输入姓名、号码布、手机或证件后4位..." autocomplete="off">
-   <button class="btn-search" onclick="search()">查询</button>
- <button class="btn-search" style="background:#10b981; margin-left:4px;" onclick="openAddModal()">+ 新增</button>
-   <button class="btn-search" style="background:#0284c7; margin-left:4px;" onclick="openCsvModal()">批量导入 CSV</button>
-  </div>
+      <input type="text" id="query" placeholder="输入姓名、编号/号码布、手机或证件后4位..." autocomplete="off">
+      <button class="btn-search" onclick="search()">查询</button>
+    </div>
+    <div class="action-toolbar">
+      <button class="btn-action btn-add" onclick="openAddModal()">➕ 单条新增</button>
+      <button class="btn-action btn-csv" onclick="openCsvModal()">📁 批量导入 CSV</button>
+    </div>
  </div>
 
  <div class="section-bar">
@@ -108,7 +119,7 @@
       <input type="text" id="new-name" class="form-input" placeholder="例如：张三">
     </div>
     <div class="form-group">
-      <label class="form-label">号码布 / 序号 *</label>
+      <label class="form-label">编号/号码布 / 序号 *</label>
       <input type="text" id="new-bib" class="form-input" placeholder="e.g. 2001">
     </div>
     <div class="form-group">
@@ -340,7 +351,7 @@ function saveRoster() {
 function deleteRecord(bib) {
   const target = roster.find(r => r.bib === bib);
   const name = target ? target.name : bib;
-  if (confirm(`确定要删除记录【${name} (号码布:${bib})】吗？`)) {
+  if (confirm(`确定要删除记录【${name} (编号/号码布:${bib})】吗？`)) {
     roster = roster.filter(r => r.bib !== bib);
     removeStaged(bib);
     saveRoster();
@@ -455,7 +466,7 @@ function confirmCsvImport() {
   const sizeIdx = document.getElementById('map-size').value;
 
   if (nameIdx === '' || bibIdx === '') {
-    alert('姓名和号码布是必填字段，请在下拉框中选择对应的列！');
+    alert('姓名和编号/号码布是必填字段，请在下拉框中选择对应的列！');
     return;
   }
 
@@ -508,7 +519,7 @@ function confirmCsvImport() {
         <select id="map-name" class="form-control" style="width:200px; padding:4px 8px;"></select>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.88rem;">
-        <span>号码布 / 序号 (必填):</span>
+        <span>编号/号码布 / 序号 (必填):</span>
         <select id="map-bib" class="form-control" style="width:200px; padding:4px 8px;"></select>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.88rem;">
