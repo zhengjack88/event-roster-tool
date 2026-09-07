@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
- <title>Event Check-In & Searchable Roster Tool</title>
+ <title>赛事志愿者物资与名单核验工具</title>
  <style> * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; }
  body { background: #f1f5f9; padding: 16px; color: #1e293b; }
  .container { max-width: 540px; margin: 0 auto; }
@@ -61,29 +61,35 @@
 </head>
 <body>
 <div class="container">
- <div class="header">
- <h1>Event Check-In & Searchable Roster</h1>
- <p>Instant Search: Name / Last 4 Digits / Bib Number</p>
+ 
+ <div style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:12px; font-size:13px;">
+  <a href="index.html" style="color:#2563eb; text-decoration:none; font-weight:500;">English</a>
+  <span style="color:#cbd5e1;">|</span>
+  <span style="font-weight:bold; color:#0f172a;">简体中文</span>
+ </div>
+<div class="header">
+ <h1>赛事志愿者物资与名单核验系统</h1>
+ <p>即时极速检索：姓名 / 手机或证件后4位 / 号码布</p>
  </div>
  <div class="search-sticky">
   <div class="search-box">
-   <input type="search" id="query" placeholder="Search name, bib, or last 4 digits..." autocomplete="off">
-   <button class="btn-search" onclick="search()">Search</button>
- <button class="btn-search" style="background:#10b981; margin-left:4px;" onclick="openAddModal()">+ Add</button>
+   <input type="search" id="query" placeholder="输入姓名、号码布、手机或证件后4位..." autocomplete="off">
+   <button class="btn-search" onclick="search()">查询</button>
+ <button class="btn-search" style="background:#10b981; margin-left:4px;" onclick="openAddModal()">+ 新增</button>
   </div>
  </div>
 
  <div class="section-bar">
-  <span>Staging Queue (<span id="stage-count">0</span>)</span>
-  <span class="clear-link" onclick="clearStaged()">Clear Staged</span>
+  <span>核验暂存区 (<span id="stage-count">0</span>)</span>
+  <span class="clear-link" onclick="clearStaged()">清空暂存</span>
  </div>
  <div class="staged-box" id="staged-container">
-  <span style="font-size:12px; color:#94a3b8;">No staged records. Click "Stage" on cards below.</span>
+  <span style="font-size:12px; color:#94a3b8;">暂无暂存记录。点击下方卡片上的“暂存”即可加入。</span>
  </div>
 
  <div class="section-bar">
-  <span>Search History</span>
-  <span class="clear-link" onclick="clearHistory()">Clear History</span>
+  <span>搜索历史</span>
+  <span class="clear-link" onclick="clearHistory()">清空历史</span>
  </div>
  <div class="tags-wrap" id="history-box"></div>
 
@@ -93,31 +99,31 @@
 <div class="modal-overlay" id="addModal">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title">+ Add New Record</span>
+      <span class="modal-title">+ 新增登记记录</span>
       <button class="close-modal" onclick="closeAddModal()">&times;</button>
     </div>
     <div class="form-group">
-      <label class="form-label">Full Name *</label>
-      <input type="text" id="new-name" class="form-input" placeholder="e.g. John Doe">
+      <label class="form-label">真实姓名 *</label>
+      <input type="text" id="new-name" class="form-input" placeholder="例如：张三">
     </div>
     <div class="form-group">
-      <label class="form-label">Bib / ID Number *</label>
+      <label class="form-label">号码布 / 序号 *</label>
       <input type="text" id="new-bib" class="form-input" placeholder="e.g. 2001">
     </div>
     <div class="form-group">
-      <label class="form-label">Phone Number</label>
+      <label class="form-label">联系电话</label>
       <input type="text" id="new-phone" class="form-input" placeholder="e.g. 555-0199">
     </div>
     <div class="form-group">
-      <label class="form-label">Doc / Identifier</label>
+      <label class="form-label">身份证 / 证件号</label>
       <input type="text" id="new-id" class="form-input" placeholder="e.g. DOC-88231">
     </div>
     <div class="form-group">
-      <label class="form-label">Size / Category</label>
+      <label class="form-label">物资尺码 / 规格</label>
       <input type="text" id="new-size" class="form-input" placeholder="e.g. XL, M, VIP">
     </div>
     <div class="form-actions">
-      <button class="btn-cancel" onclick="closeAddModal()">Cancel</button>
+      <button class="btn-cancel" onclick="closeAddModal()">取消</button>
       <button class="btn-save" onclick="saveNewRecord()">Save & Index</button>
     </div>
   </div>
@@ -130,7 +136,7 @@ const roster = [
   {no:"1",bib:"1001",name:"张三",phone:"13800138001",id:"110101199001011234",size:"L"},
   {no:"2",bib:"1002",name:"李四",phone:"13800138002",id:"310101199202022345",size:"M"},
   {no:"3",bib:"1003",name:"王五",phone:"13800138003",id:"440101199503033456",size:"XL"},
-  {no:"4",bib:"1004",name:"John Doe",phone:"13900139001",id:"320101199105051234",size:"2XL"}
+  {no:"4",bib:"1004",name:"赵六",phone:"13800138004",id:"440301199804045678",size:"S"}
 ];
 
 function search() {
@@ -234,7 +240,7 @@ function renderStaged() {
  const count = document.getElementById('stage-count');
  count.textContent = staged.length;
  if (staged.length === 0) {
-  box.innerHTML = '<span style="font-size:12px; color:#94a3b8;">No staged records. Click "Stage" on cards below.</span>';
+  box.innerHTML = '<span style="font-size:12px; color:#94a3b8;">暂无暂存记录。点击下方卡片上的“暂存”即可加入。</span>';
   // 更新所有卡片按钮为未暂存状态
   document.querySelectorAll('.btn-stage').forEach(b => {
    b.classList.remove('btn-staged'); b.textContent = 'Stage';
