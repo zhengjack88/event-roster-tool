@@ -324,6 +324,213 @@ function clearHistory() {
 // 初始化暂存夹与历史
 renderStaged();
 renderHistory();
+
+// 本地持久化支持
+let savedRoster = localStorage.getItem('roster_data');
+if (savedRoster) {
+  try { roster = JSON.parse(savedRoster); } catch(e) {}
+}
+
+function saveRoster() {
+  localStorage.setItem('roster_data', JSON.stringify(roster));
+}
+
+// 删除功能
+function deleteRecord(bib) {
+  const target = roster.find(r => r.bib === bib);
+  const name = target ? target.name : bib;
+  if (confirm(`确定要删除记录【${name} (号码布:${bib})】吗？`)) {
+    roster = roster.filter(r => r.bib !== bib);
+    removeStaged(bib);
+    saveRoster();
+    search(document.getElementById('query').value);
+  }
+}
+
+// 修改原有的 saveNewRecord 支持持久化
+const oldSaveNewRecord = saveNewRecord;
+saveNewRecord = function() {
+  oldSaveNewRecord();
+  saveRoster();
+};
+
+// CSV 智能解析与映射导入
+let parsedCsvRows = [];
+let csvHeaders = [];
+
+function openCsvModal() {
+  document.getElementById('csv-modal').classList.add('active');
+  document.getElementById('csv-file-input').value = '';
+  document.getElementById('csv-mapping-area').style.display = 'none';
+  document.getElementById('btn-do-import').style.display = 'none';
+}
+
+function closeCsvModal() {
+  document.getElementById('csv-modal').classList.remove('active');
+}
+
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (lines.length === 0) return { headers: [], rows: [] };
+  
+  function parseLine(line) {
+    const row = [];
+    let inQuotes = false;
+    let entry = '';
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') {
+        inQuotes = !inQuotes;
+      } else if (c === ',' && !inQuotes) {
+        row.push(entry.trim());
+        entry = '';
+      } else {
+        entry += c;
+      }
+    }
+    row.push(entry.trim());
+    return row;
+  }
+
+  const headers = parseLine(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = parseLine(lines[i]);
+    if (vals.length === headers.length) {
+      rows.push(vals);
+    }
+  }
+  return { headers, rows };
+}
+
+function handleCsvFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const content = evt.target.result;
+    const parsed = parseCSV(content);
+    csvHeaders = parsed.headers;
+    parsedCsvRows = parsed.rows;
+
+    if (csvHeaders.length === 0 || parsedCsvRows.length === 0) {
+      alert('CSV 文件内容为空或格式无效！');
+      return;
+    }
+
+    setupMappingSelects(csvHeaders);
+    document.getElementById('csv-mapping-area').style.display = 'block';
+    document.getElementById('btn-do-import').style.display = 'inline-block';
+    document.getElementById('csv-preview-text').innerText = `已解析 ${parsedCsvRows.length} 条数据，系统已自动推测匹配列，请核对无误后点击下方按钮导入。`;
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function setupMappingSelects(headers) {
+  const fields = ['name', 'bib', 'phone', 'id', 'size'];
+  fields.forEach(f => {
+    const sel = document.getElementById('map-' + f);
+    sel.innerHTML = '<option value="">-- 请选择或不导入 --</option>' +
+      headers.map((h, idx) => `<option value="${idx}">${h}</option>`).join('');
+    
+    // 智能识别表头
+    headers.forEach((h, idx) => {
+      const hl = h.toLowerCase();
+      if (f === 'name' && (hl.includes('名') || hl.includes('name') || hl.includes('选手') || hl.includes('姓名'))) sel.value = idx;
+      if (f === 'bib' && (hl.includes('布') || hl.includes('bib') || hl.includes('号') || hl.includes('no') || hl.includes('序号') || hl.includes('编号'))) sel.value = idx;
+      if (f === 'phone' && (hl.includes('电') || hl.includes('话') || hl.includes('phone') || hl.includes('mobile') || hl.includes('手机') || hl.includes('联系'))) sel.value = idx;
+      if (f === 'id' && (hl.includes('证') || hl.includes('id') || hl.includes('card') || hl.includes('身份'))) sel.value = idx;
+      if (f === 'size' && (hl.includes('尺') || hl.includes('码') || hl.includes('size') || hl.includes('物') || hl.includes('规格') || hl.includes('衣服'))) sel.value = idx;
+    });
+  });
+}
+
+function confirmCsvImport() {
+  const nameIdx = document.getElementById('map-name').value;
+  const bibIdx = document.getElementById('map-bib').value;
+  const phoneIdx = document.getElementById('map-phone').value;
+  const idIdx = document.getElementById('map-id').value;
+  const sizeIdx = document.getElementById('map-size').value;
+
+  if (nameIdx === '' || bibIdx === '') {
+    alert('姓名和号码布是必填字段，请在下拉框中选择对应的列！');
+    return;
+  }
+
+  let addedCount = 0;
+  parsedCsvRows.forEach(row => {
+    const name = row[nameIdx] || '';
+    const bib = row[bibIdx] || '';
+    const phone = phoneIdx !== '' ? (row[phoneIdx] || '') : '';
+    const id = idIdx !== '' ? (row[idIdx] || '') : '';
+    const size = sizeIdx !== '' ? (row[sizeIdx] || '') : '';
+
+    if (name && bib) {
+      const existingIdx = roster.findIndex(r => r.bib === bib);
+      if (existingIdx >= 0) {
+        roster[existingIdx] = { no: roster[existingIdx].no, bib, name, phone, id, size };
+      } else {
+        roster.push({ no: String(roster.length + 1), bib, name, phone, id, size });
+      }
+      addedCount++;
+    }
+  });
+
+  saveRoster();
+  closeCsvModal();
+  search(document.getElementById('query').value);
+  alert(`成功导入/更新 ${addedCount} 条选手数据！`);
+}
+
 </script>
+
+<!-- CSV Import Modal with Smart Column Mapping -->
+<div id="csv-modal" class="modal-overlay">
+  <div class="modal" style="max-width:520px;">
+    <h3 style="margin-bottom:8px;">批量导入 CSV 名单</h3>
+    <p style="font-size:0.85rem; color:#64748b; margin-bottom:12px;">
+      💡 <strong>不用担心表头不同：</strong>上传任意系统导出的 CSV，本系统会自动识别表头，并支持手动调整字段映射！
+    </p>
+    
+    <div class="form-group">
+      <label>选择 CSV 文件 (.csv)</label>
+      <input type="file" id="csv-file-input" accept=".csv, .txt" class="form-control" onchange="handleCsvFile(event)">
+    </div>
+
+    <div id="csv-mapping-area" style="display:none; margin-top:14px; border-top:1px solid #e2e8f0; padding-top:12px;">
+      <div style="font-weight:600; font-size:0.9rem; margin-bottom:8px; color:#334155;">
+        请确认表格列对应关系（自动推测）：
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.88rem;">
+        <span>姓名 (必填):</span>
+        <select id="map-name" class="form-control" style="width:200px; padding:4px 8px;"></select>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.88rem;">
+        <span>号码布 / 序号 (必填):</span>
+        <select id="map-bib" class="form-control" style="width:200px; padding:4px 8px;"></select>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.88rem;">
+        <span>手机号:</span>
+        <select id="map-phone" class="form-control" style="width:200px; padding:4px 8px;"></select>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.88rem;">
+        <span>身份证 / 证件号:</span>
+        <select id="map-id" class="form-control" style="width:200px; padding:4px 8px;"></select>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.88rem;">
+        <span>物资尺码:</span>
+        <select id="map-size" class="form-control" style="width:200px; padding:4px 8px;"></select>
+      </div>
+      <div id="csv-preview-text" style="font-size:0.85rem; color:#10b981; margin-top:8px; font-weight:500;"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeCsvModal()">取消</button>
+      <button id="btn-do-import" class="btn btn-success" style="display:none;" onclick="confirmCsvImport()">确认导入并保存</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
