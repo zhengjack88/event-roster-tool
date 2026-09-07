@@ -1,8 +1,13 @@
 # Event Roster & Material Distribution Tool
 
-[简体中文](README_zh.md) | [Live Demo / GitHub Pages](https://zhengjack88.github.io/event-roster-tool/)
+[简体中文](README_zh.md) | [Live Demo (English)](https://zhengjack88.github.io/event-roster-tool/) | [Live Demo (Chinese)](https://zhengjack88.github.io/event-roster-tool/index_zh.html)
 
-A lightweight, single-file HTML web tool designed for event volunteers to verify participant rosters, distribute materials, and check clothing sizes on-site (marathons, trail runs, cycling races, etc.).
+A lightweight, single-file HTML web tool designed for event volunteers to verify participant rosters, distribute materials, and check clothing sizes on-site.
+
+## Versions
+
+- `index.html`: Default English (bilingual switcher supported)
+- `index_zh.html`: Default Chinese (loads directly in Chinese)
 
 ## Key Features
 
@@ -13,27 +18,10 @@ A lightweight, single-file HTML web tool designed for event volunteers to verify
 - 🖨️ **Print Optimized**: One-click reset, clean print styles, and mobile responsiveness.
 - 🔒 **100% Client-Side Privacy**: Runs completely offline in the browser. Zero telemetry or data leakage.
 
-## Quick Start
+## License & Commercial Rights
 
-### Option 1: Live Demo
-Access directly via GitHub Pages:
-👉 **[https://zhengjack88.github.io/event-roster-tool/](https://zhengjack88.github.io/event-roster-tool/)**
+This project is licensed under a **Proprietary Source-Available License**:
 
-### Option 2: Local Offline
-1. Download `index.html`.
-2. Double click to open in any web browser.
-
-## Customizing Roster Data
-
-Open `index.html` in any text editor, locate `const roster = [...]` in the `<script>` tag, and replace with your own event participant records:
-
-```javascript
-const roster = [
-  { no: "1", bib: "1001", name: "John Doe", phone: "13800138001", id: "110101199001011234", size: "L" },
-  { no: "2", bib: "1002", name: "Jane Smith", phone: "13800138002", id: "310101199202022345", size: "M" }
-];
-```
-
-## License
-
-MIT License
+- **Free for Personal/Event Use**: Free to inspect, download, and use for personal or volunteer non-commercial events.
+- **No Reselling / Commercialization**: **Third parties are strictly prohibited from selling, reselling, or embedding this software into paid commercial products.**
+- **Exclusive Commercial Rights**: The author (**zhengjack88**) holds the **sole and exclusive right** to commercially sell, resell, or license this software.
