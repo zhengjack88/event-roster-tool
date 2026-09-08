@@ -376,13 +376,11 @@ function exportStandaloneHtml(groupEncoded, groupName) {
   if (scriptRegex.test(html)) {
     html = html.replace(scriptRegex, newScript);
   } else {
-    html = html.replace('</head>', newScript + '
-</head>');
+    html = html.replace('</head>', newScript + '\n</head>');
   }
 
   if (!html.startsWith('<!DOCTYPE html>')) {
-    html = '<!DOCTYPE html>
-' + html;
+    html = '<!DOCTYPE html>\n' + html;
   }
 
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
