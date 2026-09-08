@@ -10,6 +10,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="名单核验">
   <title>赛事志愿者物资与名单核验工具</title>
+  <script id="preloaded-data-script">
+    window.__PRELOADED_ROSTER__ = null;
+    window.__DEFAULT_GROUP__ = null;
+  </script>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; padding: 0; }
     body { background: #f1f5f9; padding: 14px; color: #1e293b; -webkit-tap-highlight-color: transparent; }
@@ -344,10 +348,77 @@ const STAGED_KEY = 'event_roster_staged_v2';
 const HISTORY_KEY = 'event_roster_history_v2';
 
 // ===== 初始化 =====
+
+// 方案一：一键烘焙并导出带数据的单文件 HTML
+function exportStandaloneHtml(groupEncoded, groupName) {
+  let targetData = roster;
+  let targetGroup = null;
+  if (groupEncoded) {
+    targetGroup = decodeURIComponent(groupEncoded);
+    targetData = roster.filter(x => (x.group || '未分组') === targetGroup);
+  }
+
+  if (!targetData || targetData.length === 0) {
+    alert('当前没有可导出的名单数据！');
+    return;
+  }
+
+  // 获取当前网页完整 DOM
+  let html = document.documentElement.outerHTML;
+
+  // 构造内嵌数据的替换脚本
+  const scriptRegex = /<script id="preloaded-data-script">[\s\S]*?<\/script>/;
+  const newScript = `<script id="preloaded-data-script">
+    window.__PRELOADED_ROSTER__ = ${JSON.stringify(targetData)};
+    window.__DEFAULT_GROUP__ = ${JSON.stringify(targetGroup)};
+  <\/script>`;
+
+  if (scriptRegex.test(html)) {
+    html = html.replace(scriptRegex, newScript);
+  } else {
+    html = html.replace('</head>', newScript + '
+</head>');
+  }
+
+  if (!html.startsWith('<!DOCTYPE html>')) {
+    html = '<!DOCTYPE html>
+' + html;
+  }
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const safeName = (targetGroup || '全量名单').replace(/[\/:*?"<>|]/g, '_');
+  a.download = `赛事核验_${safeName}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 window.addEventListener('DOMContentLoaded', () => {
-  loadStoredData();
-  handleUrlParams();
-  search();
+  if (window.__PRELOADED_ROSTER__ && Array.isArray(window.__PRELOADED_ROSTER__) && window.__PRELOADED_ROSTER__.length > 0) {
+    roster = window.__PRELOADED_ROSTER__;
+    if (window.__DEFAULT_GROUP__) {
+      activeGroup = window.__DEFAULT_GROUP__;
+    }
+    try {
+      staged = JSON.parse(localStorage.getItem(STAGED_KEY) || '[]');
+      history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    } catch(e) {
+      staged = [];
+      history = [];
+    }
+    renderStaged();
+    renderHistory();
+    renderGroupBanner();
+    search();
+  } else {
+    loadStoredData();
+    handleUrlParams();
+    search();
+  }
 });
 
 // 处理 URL 中的岗位过滤或压缩数据包
@@ -783,8 +854,9 @@ function openDistributeModal() {
         <span class="dist-group-title">🌟 全部完整名单 (管理员)</span>
         <span class="dist-group-badge" style="background:#dbeafe; color:#1d4ed8;">共 ${roster.length} 人</span>
       </div>
-      <div class="dist-actions">
-        <button class="btn-mini btn-mini-primary" onclick="generateDistribution('', '全部完整名单')">📱 生成二维码 / 分享链接</button>
+      <div class="dist-actions" style="flex-wrap:wrap; gap:8px;">
+        <button class="btn-mini btn-mini-primary" onclick="generateDistribution('', '全部完整名单')">📱 二维码 / 链接</button>
+        <button class="btn-mini" style="background:#10b981; color:#fff; border-color:#10b981;" onclick="exportStandaloneHtml('', '全部完整名单')">📥 导出全量独立 HTML</button>
       </div>
     </div>
   ` + groupKeys.map(g => `
@@ -793,8 +865,9 @@ function openDistributeModal() {
         <span class="dist-group-title">🏷️ ${g}</span>
         <span class="dist-group-badge">共 ${groupsMap[g]} 人</span>
       </div>
-      <div class="dist-actions">
-        <button class="btn-mini btn-mini-primary" onclick="generateDistribution('${encodeURIComponent(g)}', '${g}')">📱 生成本组专属码 / 链接</button>
+      <div class="dist-actions" style="flex-wrap:wrap; gap:8px;">
+        <button class="btn-mini btn-mini-primary" onclick="generateDistribution('${encodeURIComponent(g)}', '${g}')">📱 专属码 / 链接</button>
+        <button class="btn-mini" style="background:#059669; color:#fff; border-color:#059669;" onclick="exportStandaloneHtml('${encodeURIComponent(g)}', '${g}')">📥 导出本组离线 HTML</button>
       </div>
     </div>
   `).join('');
