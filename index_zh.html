@@ -425,7 +425,13 @@ window.addEventListener('DOMContentLoaded', () => {
 function handleUrlParams() {
   const params = new URLSearchParams(window.location.search);
   
-  // 1. 是否携带了压缩的打包数据 (pkg)
+  // 1. 是否带有组别限定 (group)
+  const groupParam = params.get('group');
+  if (groupParam) {
+    activeGroup = decodeURIComponent(groupParam);
+  }
+
+  // 2. 是否携带了压缩的打包数据 (pkg)
   const pkgData = params.get('pkg');
   if (pkgData) {
     try {
@@ -433,17 +439,15 @@ function handleUrlParams() {
       if (jsonStr) {
         const importedData = JSON.parse(jsonStr);
         if (Array.isArray(importedData) && importedData.length > 0) {
-          // 合并到本地存储
-          const localCustom = JSON.parse(localStorage.getItem(CUSTOM_DATA_KEY) || '[]');
-          const merged = [...localCustom];
-          importedData.forEach(item => {
-            if (!merged.some(m => m.bib === item.bib)) {
-              merged.push(item);
-            }
-          });
-          localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(merged));
-          roster = merged;
-          console.log('成功通过 URL 载入专属数据包:', importedData.length);
+          // 直接作为当前运行数据，并保存到本地
+          roster = importedData;
+          localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(importedData));
+          populateGroupSelects();
+          renderGroupBanner();
+          renderStats();
+          search();
+          console.log('成功通过扫码载入数据:', importedData.length);
+          return;
         }
       }
     } catch (e) {
@@ -451,10 +455,7 @@ function handleUrlParams() {
     }
   }
 
-  // 2. 是否带有组别限定 (group)
-  const groupParam = params.get('group');
-  if (groupParam) {
-    activeGroup = decodeURIComponent(groupParam);
+  if (activeGroup) {
     renderGroupBanner();
   }
 }
@@ -884,20 +885,22 @@ function generateDistribution(groupEncoded, groupName) {
   const baseUrl = window.location.origin + window.location.pathname;
   let targetUrl = baseUrl;
   
+  // 提取对应数据（全量或组别）
+  let targetData = [];
   if (groupEncoded) {
-    // 提取该组别的数据
     const gName = decodeURIComponent(groupEncoded);
-    const subData = roster.filter(x => (x.group || '未分组') === gName);
-    
-    // 使用 LZString 进行离线高倍压缩
-    const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(subData));
-    
-    // 如果压缩后长度适中 (小于 2500 字符)，将数据包直接注入 URL，达到“扫码即带走数据”的神奇体验
-    if (compressed.length < 2400) {
-      targetUrl = `${baseUrl}?group=${groupEncoded}&pkg=${compressed}`;
-    } else {
-      targetUrl = `${baseUrl}?group=${groupEncoded}`;
-    }
+    targetData = roster.filter(x => (x.group || '未分组') === gName);
+  } else {
+    targetData = roster;
+  }
+  
+  // 压缩数据
+  const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(targetData));
+  
+  if (groupEncoded) {
+    targetUrl = `${baseUrl}?group=${groupEncoded}&pkg=${compressed}`;
+  } else {
+    targetUrl = `${baseUrl}?pkg=${compressed}`;
   }
 
   document.getElementById('qr-modal-title').textContent = `【${groupName}】专属核验入口`;
