@@ -4,415 +4,647 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-
- <meta charset="UTF-8">
- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
- <title>赛事志愿者物资与名单核验工具</title>
- <style> * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; }
- body { background: #f1f5f9; padding: 16px; color: #1e293b; }
- .container { max-width: 540px; margin: 0 auto; }
- .header { text-align: center; margin-bottom: 16px; }
- .header h1 { font-size: 20px; color: #0f172a; margin-bottom: 4px; }
- .header p { font-size: 13px; color: #64748b; }
-
- .search-sticky { position: sticky; top: 8px; z-index: 100; background: #f8fafc; padding-bottom: 8px; }
- .search-box { display: flex; gap: 8px; margin-bottom: 10px; }
-    .action-toolbar { display: flex; gap: 10px; margin-bottom: 14px; width: 100%; }
-    .btn-action { flex: 1; padding: 12px 10px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.06); }
-    .btn-action:active { opacity: 0.85; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="名单核验">
+  <title>赛事志愿者物资与名单核验工具</title>
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; padding: 0; }
+    body { background: #f1f5f9; padding: 14px; color: #1e293b; -webkit-tap-highlight-color: transparent; }
+    .container { max-width: 560px; margin: 0 auto; }
+    
+    /* 顶部标题区 */
+    .header { text-align: center; margin-bottom: 12px; position: relative; }
+    .header h1 { font-size: 20px; color: #0f172a; margin-bottom: 3px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .header p { font-size: 13px; color: #64748b; }
+    .header-help-btn { display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; font-size: 12px; color: #2563eb; background: #eff6ff; padding: 4px 10px; border-radius: 20px; border: 1px solid #bfdbfe; cursor: pointer; text-decoration: none; }
+    
+    /* 岗位隔离提示横幅 */
+    .group-banner { display: none; background: #ecfdf5; border: 1.5px solid #a7f3d0; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; align-items: center; justify-content: space-between; }
+    .group-banner.active { display: flex; }
+    .group-banner-info { font-size: 13px; color: #065f46; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .group-banner-badge { background: #059669; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 12px; }
+    .group-banner-btn { background: #fff; border: 1px solid #a7f3d0; color: #047857; font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer; }
+    
+    /* 搜索框与吸顶 */
+    .search-sticky { position: sticky; top: 6px; z-index: 99; background: #f8fafc; padding-bottom: 8px; }
+    .search-box { display: flex; gap: 8px; margin-bottom: 10px; }
+    input { flex: 1; padding: 12px 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 16px; outline: none; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.04); -webkit-appearance: none; }
+    input:focus { border-color: #2563eb; }
+    .btn-search { padding: 0 16px; background: #2563eb; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+    
+    /* 大按钮操作栏 */
+    .action-toolbar { display: flex; gap: 8px; margin-bottom: 12px; width: 100%; }
+    .btn-action { flex: 1; padding: 11px 6px; border: none; border-radius: 10px; font-size: 13.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.06); }
+    .btn-action:active { opacity: 0.85; transform: scale(0.98); }
     .btn-add { background: #10b981; color: #fff; }
     .btn-csv { background: #0284c7; color: #fff; }
- input { flex: 1; padding: 12px 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 16px; outline: none; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
- input:focus { border-color: #2563eb; }
- .btn-search { padding: 0 16px; background: #2563eb; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
-
- .section-bar { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 6px 0; font-size: 13px; color: #64748b; }
- .tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
- .tag { background: #e2e8f0; color: #334155; padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; }
- .tag-active { background: #dbeafe; color: #1d4ed8; }
-
- .staged-box { background: #eff6ff; border: 1px dashed #bfdbfe; border-radius: 10px; padding: 10px; margin-bottom: 12px; }
- .staged-item { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #bfdbfe; padding: 4px 8px; border-radius: 6px; font-size: 13px; margin: 3px 2px; }
- .del-btn { color: #ef4444; font-weight: bold; cursor: pointer; padding-left: 4px; }
-
- .card { background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border-left: 4px solid #2563eb; }
- .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f1f5f9; }
- .name-box { display: flex; align-items: baseline; gap: 8px; }
- .name { font-size: 18px; font-weight: bold; color: #0f172a; }
- .bib { font-size: 17px; font-weight: 800; color: #dc2626; }
- .info-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
- .label { color: #64748b; }
- .val { font-weight: 500; color: #334155; }
- .badge { background: #e0e7ff; color: #3730a3; padding: 1px 6px; border-radius: 4px; font-weight: 700; font-size: 12px; }
-
- .action-bar { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e2e8f0; display: flex; justify-content: flex-end; }
- .btn-stage { background: #f8fafc; border: 1px solid #cbd5e1; color: #334155; padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
- .btn-staged { background: #fee2e2; border-color: #fca5a5; color: #b91c1c; }
- .clear-link { color: #94a3b8; font-size: 12px; text-decoration: none; cursor: pointer; }
- .empty { text-align: center; color: #94a3b8; margin-top: 30px; font-size: 14px; }
-/* Modal Styles for Adding Records */
-.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 16px; }
-.modal-overlay.active { display: flex; }
-.modal-card { background: #fff; width: 100%; max-width: 440px; border-radius: 14px; padding: 20px; box-shadow: 0 12px 30px rgba(0,0,0,0.18); animation: popIn 0.2s ease-out; }
-@keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
-.modal-title { font-size: 16px; font-weight: 700; color: #0f172a; }
-.close-modal { font-size: 22px; color: #94a3b8; cursor: pointer; border: none; background: none; line-height: 1; }
-.form-group { margin-bottom: 10px; }
-.form-label { display: block; font-size: 13px; color: #64748b; margin-bottom: 4px; font-weight: 500; }
-.form-input { width: 100%; padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; box-sizing: border-box; }
-.form-input:focus { border-color: #2563eb; }
-.form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
-.btn-cancel { padding: 8px 16px; background: #f1f5f9; color: #475569; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
-.btn-save { padding: 8px 18px; background: #10b981; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
-
-</style>
+    .btn-distribute { background: #8b5cf6; color: #fff; }
+    
+    /* 状态与统计 */
+    .section-bar { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 6px 0; font-size: 13px; color: #64748b; }
+    .tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .tag { background: #e2e8f0; color: #334155; padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; }
+    .tag-active { background: #dbeafe; color: #1d4ed8; font-weight: 600; }
+    
+    /* 暂存区 */
+    .staged-box { background: #eff6ff; border: 1px dashed #bfdbfe; border-radius: 10px; padding: 10px; margin-bottom: 12px; }
+    .staged-item { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #bfdbfe; padding: 4px 8px; border-radius: 6px; font-size: 13px; margin: 3px 2px; }
+    .del-btn { color: #ef4444; font-weight: bold; cursor: pointer; padding-left: 4px; }
+    
+    /* 结果卡片 */
+    .card { background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border-left: 4px solid #2563eb; }
+    .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f1f5f9; }
+    .name-box { display: flex; align-items: baseline; gap: 8px; }
+    .name { font-size: 18px; font-weight: bold; color: #0f172a; }
+    .bib { font-size: 17px; font-weight: 800; color: #dc2626; }
+    .group-pill { font-size: 11px; background: #f3e8ff; color: #7e22ce; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+    .info-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+    .label { color: #64748b; }
+    .val { font-weight: 500; color: #334155; }
+    .badge { background: #e0e7ff; color: #3730a3; padding: 1px 6px; border-radius: 4px; font-weight: 700; font-size: 12px; }
+    .action-bar { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+    .btn-stage { background: #f8fafc; border: 1px solid #cbd5e1; color: #334155; padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+    .btn-staged { background: #fee2e2; border-color: #fca5a5; color: #b91c1c; }
+    .clear-link { color: #94a3b8; font-size: 12px; text-decoration: none; cursor: pointer; }
+    .empty { text-align: center; color: #94a3b8; margin-top: 30px; font-size: 14px; }
+    
+    /* 弹窗通用样式 */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 14px; }
+    .modal-overlay.active { display: flex; }
+    .modal-card { background: #fff; width: 100%; max-width: 450px; max-height: 90vh; overflow-y: auto; border-radius: 14px; padding: 18px; box-shadow: 0 12px 30px rgba(0,0,0,0.2); animation: popIn 0.2s ease-out; }
+    @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
+    .modal-title { font-size: 16px; font-weight: 700; color: #0f172a; }
+    .close-modal { font-size: 22px; color: #94a3b8; cursor: pointer; border: none; background: none; line-height: 1; padding: 0 4px; }
+    
+    .form-group { margin-bottom: 11px; }
+    .form-label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 4px; }
+    .form-input { width: 100%; padding: 10px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; background: #fff; }
+    .form-input:focus { border-color: #2563eb; }
+    .form-select { width: 100%; padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fff; }
+    
+    .btn-submit { width: 100%; padding: 12px; background: #10b981; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+    .btn-submit:active { opacity: 0.9; }
+    .btn-primary { background: #2563eb; }
+    .btn-purple { background: #8b5cf6; }
+    
+    /* 分发中心卡片与二维码 */
+    .dist-group-card { background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+    .dist-group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .dist-group-title { font-weight: 700; font-size: 14px; color: #1e293b; }
+    .dist-group-badge { background: #ede9fe; color: #6d28d9; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .dist-actions { display: flex; gap: 8px; }
+    .btn-mini { padding: 6px 10px; font-size: 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+    .btn-mini-primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+    
+    /* 二维码展示弹窗 */
+    #qr-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; background: #fff; border-radius: 12px; }
+    #qr-canvas-box { padding: 10px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; display: inline-block; }
+    
+    /* iOS 指引折叠卡片 */
+    .guide-step { display: flex; gap: 10px; margin-bottom: 12px; align-items: flex-start; }
+    .guide-num { background: #2563eb; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+    .guide-text { font-size: 13px; color: #334155; line-height: 1.4; }
+    .guide-text strong { color: #0f172a; }
+  </style>
 </head>
 <body>
+
 <div class="container">
- 
- <div style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:12px; font-size:13px;">
-  <a href="index.html" style="color:#2563eb; text-decoration:none; font-weight:500;">English</a>
-  <span style="color:#cbd5e1;">|</span>
-  <span style="font-weight:bold; color:#0f172a;">简体中文</span>
- </div>
-<div class="header">
- <h1>赛事志愿者物资与名单核验系统</h1>
- <p>即时极速检索：姓名 / 手机或证件后4位 / 编号/号码布</p>
- </div>
- <div class="search-sticky">
-  <div class="search-box">
-      <input type="text" id="query" placeholder="输入姓名、编号/号码布、手机或证件后4位..." autocomplete="off">
+  <div class="header">
+    <h1>📋 赛事志愿者物资与名单核验</h1>
+    <p>单机安全运行 · 离线可用 · 现场隐私不泄露</p>
+    <a href="javascript:void(0)" class="header-help-btn" onclick="openIosGuideModal()">📱 志愿者使用说明 / 存到手机桌面</a>
+  </div>
+
+  <!-- 岗位隔离提示横幅 (若 URL 中带有 group 参数或选择了组别) -->
+  <div id="group-banner" class="group-banner">
+    <div class="group-banner-info">
+      <span>🎯 当前岗位：</span>
+      <span id="group-banner-name" class="group-banner-badge">全部名单</span>
+      <span id="group-banner-count" style="font-size: 12px; color: #047857;">(0 人)</span>
+    </div>
+    <button class="group-banner-btn" onclick="switchAllGroups()">查看全部</button>
+  </div>
+
+  <div class="search-sticky">
+    <div class="search-box">
+      <input type="text" id="kw" placeholder="输入姓名 / 编号 / 手机或身份证后4位" oninput="search()" onfocus="this.select()">
       <button class="btn-search" onclick="search()">查询</button>
     </div>
+
+    <!-- 响应式三按钮工具栏 -->
     <div class="action-toolbar">
-      <button class="btn-action btn-add" onclick="openAddModal()">➕ 单条新增</button>
-      <button class="btn-action btn-csv" onclick="openCsvModal()">📁 批量导入 CSV</button>
+      <button class="btn-action btn-add" onclick="openAddModal()">➕ 单条录入</button>
+      <button class="btn-action btn-csv" onclick="openCsvModal()">📁 批量导入</button>
+      <button class="btn-action btn-distribute" onclick="openDistributeModal()">🔗 岗位分发</button>
     </div>
- </div>
+  </div>
 
- <div class="section-bar">
-  <span>核验暂存区 (<span id="stage-count">0</span>)</span>
-  <span class="clear-link" onclick="clearStaged()">清空暂存</span>
- </div>
- <div class="staged-box" id="staged-container">
-  <span style="font-size:12px; color:#94a3b8;">暂无暂存记录。点击下方卡片上的“暂存”即可加入。</span>
- </div>
+  <div class="section-bar">
+    <span>已暂存待领 (<span id="stage-count">0</span>)</span>
+    <a class="clear-link" onclick="clearStaged()">清空暂存</a>
+  </div>
+  <div class="staged-box" id="staged-container">
+    <span style="font-size:12px; color:#94a3b8;">暂无暂存。在查询结果卡片上点击“暂存”即可加入批量核对。</span>
+  </div>
 
- <div class="section-bar">
-  <span>搜索历史</span>
-  <span class="clear-link" onclick="clearHistory()">清空历史</span>
- </div>
- <div class="tags-wrap" id="history-box"></div>
+  <div class="section-bar">
+    <span>最近核验历史 (<span id="history-count">0</span>)</span>
+    <a class="clear-link" onclick="clearHistory()">清空历史</a>
+  </div>
+  <div class="tags-wrap" id="history-tags">
+    <span style="font-size:12px; color:#94a3b8;">暂无最近核验记录</span>
+  </div>
 
- <div id="result"></div>
+  <div class="section-bar">
+    <span>核验结果列表 (<span id="result-count">0</span>)</span>
+    <span style="font-size:11px; color:#94a3b8;">支持拼音/首字母检索</span>
+  </div>
+  <div id="result-list"></div>
+</div>
 
-<!-- Add New Record Modal -->
-<div class="modal-overlay" id="addModal">
+<!-- 单条录入模态框 -->
+<div id="add-modal" class="modal-overlay">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title">+ 新增登记记录</span>
+      <span class="modal-title">➕ 新增名单记录</span>
       <button class="close-modal" onclick="closeAddModal()">&times;</button>
     </div>
     <div class="form-group">
-      <label class="form-label">真实姓名 *</label>
+      <label class="form-label">志愿者/选手姓名 *</label>
       <input type="text" id="new-name" class="form-input" placeholder="例如：张三">
     </div>
     <div class="form-group">
-      <label class="form-label">编号/号码布 / 序号 *</label>
-      <input type="text" id="new-bib" class="form-input" placeholder="e.g. 2001">
+      <label class="form-label">编号 / 号码布 *</label>
+      <input type="text" id="new-bib" class="form-input" placeholder="例如：A1001 或 V-08">
     </div>
     <div class="form-group">
-      <label class="form-label">联系电话</label>
-      <input type="text" id="new-phone" class="form-input" placeholder="e.g. 555-0199">
+      <label class="form-label">所属岗位 / 组别 (可选)</label>
+      <input type="text" id="new-group" class="form-input" placeholder="例如：检录组、物资组、起跑区">
     </div>
     <div class="form-group">
-      <label class="form-label">身份证 / 证件号</label>
-      <input type="text" id="new-id" class="form-input" placeholder="e.g. DOC-88231">
+      <label class="form-label">手机号码</label>
+      <input type="tel" id="new-phone" class="form-input" placeholder="例如：13800000000">
     </div>
     <div class="form-group">
-      <label class="form-label">物资尺码 / 规格</label>
-      <input type="text" id="new-size" class="form-input" placeholder="e.g. XL, M, VIP">
+      <label class="form-label">身份证号 / 证件号</label>
+      <input type="text" id="new-id" class="form-input" placeholder="用于后4位核对">
     </div>
-    <div class="form-actions">
-      <button class="btn-cancel" onclick="closeAddModal()">取消</button>
-      <button class="btn-save" onclick="saveNewRecord()">Save & Index</button>
+    <div class="form-group">
+      <label class="form-label">物资/服装尺码</label>
+      <input type="text" id="new-size" class="form-input" placeholder="例如：L、XL、大号">
+    </div>
+    <button class="btn-submit" onclick="saveNewRecord()">保存并载入列表</button>
+  </div>
+</div>
+
+<!-- 批量导入 CSV 模态框 -->
+<div id="csv-modal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title">📁 批量导入名单 (CSV)</span>
+      <button class="close-modal" onclick="closeCsvModal()">&times;</button>
+    </div>
+    <div style="font-size:12px; color:#64748b; margin-bottom:12px; line-height:1.4;">
+      💡 请选择 Excel 导出的 <strong>.csv</strong> 格式表格。数据完全在本地解析，不上传任何服务器，请放心使用。
+    </div>
+    <div class="form-group">
+      <input type="file" id="csv-file-input" accept=".csv,text/csv" class="form-input" onchange="handleCsvFile(event)">
+    </div>
+    <div id="csv-mapping-area" style="display:none; margin-top:14px; border-top:1px dashed #e2e8f0; padding-top:12px;">
+      <div style="font-size:13px; font-weight:700; color:#1e293b; margin-bottom:8px;">请确认表格列对应关系：</div>
+      <div class="form-group">
+        <label class="form-label">姓名列 *</label>
+        <select id="map-name" class="form-select"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">编号 / 号码布列 *</label>
+        <select id="map-bib" class="form-select"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">所属组别 / 岗位列 (可选)</label>
+        <select id="map-group" class="form-select"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">手机号码列 (可选)</label>
+        <select id="map-phone" class="form-select"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">身份证/证件号列 (可选)</label>
+        <select id="map-id" class="form-select"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">物资/衣服尺码列 (可选)</label>
+        <select id="map-size" class="form-select"></select>
+      </div>
+      <button class="btn-submit" onclick="confirmCsvImport()">确认并批量导入</button>
     </div>
   </div>
 </div>
 
+<!-- 岗位分发中心模态框 -->
+<div id="dist-modal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title">🔗 岗位数据隔离分发中心</span>
+      <button class="close-modal" onclick="closeDistributeModal()">&times;</button>
+    </div>
+    <div style="font-size:12px; color:#64748b; margin-bottom:12px; line-height:1.4;">
+      管理员可按组别生成专属链接或二维码发给各岗位志愿者。各组志愿者打开后<strong>仅能查看并核对本组数据</strong>，互不干扰！
+    </div>
+    <div id="dist-groups-container"></div>
+  </div>
 </div>
 
+<!-- 二维码与链接展示弹窗 -->
+<div id="qr-modal" class="modal-overlay">
+  <div class="modal-card" style="text-align: center;">
+    <div class="modal-header">
+      <span class="modal-title" id="qr-modal-title">岗位专属二维码</span>
+      <button class="close-modal" onclick="closeQrModal()">&times;</button>
+    </div>
+    <div id="qr-container">
+      <div id="qr-canvas-box"></div>
+      <p style="font-size: 13px; color: #475569; margin-top: 10px; font-weight: 600;" id="qr-tip-text">志愿者手机微信或相机扫一扫即可直接核验</p>
+      <input type="text" id="qr-url-input" class="form-input" readonly style="margin-top: 10px; font-size: 12px; color: #64748b;" onclick="this.select()">
+      <button class="btn-submit btn-primary" style="margin-top: 8px;" onclick="copyQrUrl()">📋 复制专属链接发微信群</button>
+    </div>
+  </div>
+</div>
+
+<!-- 傻瓜式指引 / iOS 桌面保存说明模态框 -->
+<div id="ios-modal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title">📱 志愿者傻瓜式使用指南</span>
+      <button class="close-modal" onclick="closeIosGuideModal()">&times;</button>
+    </div>
+    <div style="margin-bottom: 14px;">
+      <div class="guide-step">
+        <div class="guide-num">1</div>
+        <div class="guide-text">
+          <strong>打开即可查询：</strong>无需注册账号，无需下载 App，在上方输入姓名或手机后4位即可秒查物资和编号。
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-num">2</div>
+        <div class="guide-text">
+          <strong>断网离线可用：</strong>页面打开后会自动离线缓存，现场地下室或大山里没有网络信号照样能顺畅核对。
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-num">3</div>
+        <div class="guide-text">
+          <strong>iOS / 苹果手机存到桌面（变成 App）：</strong><br>
+          ① 用 Safari 浏览器打开当前页面；<br>
+          ② 点击底部正中间的 <strong>分享图标</strong>（带有向上箭头的方块）；<br>
+          ③ 向上滑动菜单，点击 <strong>「添加到主屏幕」</strong>；<br>
+          ④ 点击右上角「添加」，手机桌面上就会生成一个像原生 App 一样的独立图标，全屏纯净操作！
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-num">4</div>
+        <div class="guide-text">
+          <strong>安卓手机存到桌面：</strong><br>
+          在 Chrome 或自带浏览器中点击右上角三个点，选择 <strong>「添加到主屏幕」</strong> 或 <strong>「添加至桌面」</strong> 即可。
+        </div>
+      </div>
+    </div>
+    <button class="btn-submit btn-primary" onclick="closeIosGuideModal()">我明白了</button>
+  </div>
+</div>
+
+<div style="text-align:center; padding: 20px 12px 30px; font-size:0.8rem; color:#64748b; line-height: 1.6;">
+  <span>🎗️ 欢迎各类赛事、公益与志愿服务免费使用 · 纯单机离线零泄露</span><br>
+  <span style="font-size:0.72rem; color:#94a3b8;">如蒙受惠，若能惠赐一份志愿服务荣誉证书留念，不胜荣幸</span>
+</div>
+
+<!-- 嵌入核心离线压缩与二维码库 -->
 <script>
-const roster = [
-  {no:"1",bib:"1001",name:"张三",phone:"13800138001",id:"110101199001011234",size:"L"},
-  {no:"2",bib:"1002",name:"李四",phone:"13800138002",id:"310101199202022345",size:"M"},
-  {no:"3",bib:"1003",name:"王五",phone:"13800138003",id:"440101199503033456",size:"XL"},
-  {no:"4",bib:"1004",name:"赵六",phone:"13800138004",id:"440301199804045678",size:"S"}
-];
+var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$",e={};function t(r,o){if(!e[r]){e[r]={};for(var n=0;n<r.length;n++)e[r][r.charAt(n)]=n}return e[r][o]}var i={compressToBase64:function(r){if(null==r)return"";var n=i._compress(r,6,function(r){return o.charAt(r)});switch(n.length%4){default:case 0:return n;case 1:return n+"===";case 2:return n+"==";case 3:return n+"="}},decompressFromBase64:function(r){return null==r?"":""==r?null:i._decompress(r.length,32,function(n){return t(o,r.charAt(n))})},compressToUTF16:function(o){return null==o?"":i._compress(o,15,function(o){return r(o+32)})+" "},decompressFromUTF16:function(r){return null==r?"":""==r?null:i._decompress(r.length,16384,function(o){return r.charCodeAt(o)-32})},compressToUint8Array:function(r){for(var o=i.compress(r),n=new Uint8Array(2*o.length),e=0,t=o.length;e<t;e++){var s=o.charCodeAt(e);n[2*e]=s>>>8,n[2*e+1]=s%256}return n},decompressFromUint8Array:function(o){if(null==o)return i.decompress(o);for(var n=new Array(o.length/2),e=0,t=n.length;e<t;e++)n[e]=256*o[2*e]+o[2*e+1];var s=[];return n.forEach(function(o){s.push(r(o))}),i.decompress(s.join(""))},compressToEncodedURIComponent:function(r){return null==r?"":i._compress(r,6,function(r){return n.charAt(r)})},decompressFromEncodedURIComponent:function(r){return null==r?"":""==r?null:(r=r.replace(/ /g,"+"),i._decompress(r.length,32,function(o){return t(n,r.charAt(o))}))},compress:function(o){return i._compress(o,16,function(o){return r(o)})},_compress:function(r,o,n){if(null==r)return"";var e,t,i,s={},u={},a="",p="",c="",l=2,f=3,h=2,d=[],m=0,v=0;for(i=0;i<r.length;i+=1)if(a=r.charAt(i),Object.prototype.hasOwnProperty.call(s,a)||(s[a]=f++,u[a]=!0),p=c+a,Object.prototype.hasOwnProperty.call(s,p))c=p;else{if(Object.prototype.hasOwnProperty.call(u,c)){if(c.charCodeAt(0)<256){for(e=0;e<h;e++)m<<=1,v==o-1?(v=0,d.push(n(m)),m=0):v++;for(t=c.charCodeAt(0),e=0;e<8;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}else{for(t=1,e=0;e<h;e++)m=m<<1|t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t=0;for(t=c.charCodeAt(0),e=0;e<16;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}0==--l&&(l=Math.pow(2,h),h++),delete u[c]}else for(t=s[c],e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;0==--l&&(l=Math.pow(2,h),h++),s[p]=f++,c=String(a)}if(""!==c){if(Object.prototype.hasOwnProperty.call(u,c)){if(c.charCodeAt(0)<256){for(e=0;e<h;e++)m<<=1,v==o-1?(v=0,d.push(n(m)),m=0):v++;for(t=c.charCodeAt(0),e=0;e<8;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}else{for(t=1,e=0;e<h;e++)m=m<<1|t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t=0;for(t=c.charCodeAt(0),e=0;e<16;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}0==--l&&(l=Math.pow(2,h),h++),delete u[c]}else for(t=s[c],e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;0==--l&&(l=Math.pow(2,h),h++)}for(t=2,e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;for(;;){if(m<<=1,v==o-1){d.push(n(m));break}v++}return d.join("")},decompress:function(r){return null==r?"":""==r?null:i._decompress(r.length,32768,function(o){return r.charCodeAt(o)})},_decompress:function(o,n,e){var t,i,s,u,a,p,c,l=[],f=4,h=4,d=3,m="",v=[],g={val:e(0),position:n,index:1};for(t=0;t<3;t+=1)l[t]=t;for(s=0,a=Math.pow(2,2),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;switch(s){case 0:for(s=0,a=Math.pow(2,8),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;c=r(s);break;case 1:for(s=0,a=Math.pow(2,16),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;c=r(s);break;case 2:return""}for(l[3]=c,i=c,v.push(c);;){if(g.index>o)return"";for(s=0,a=Math.pow(2,d),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;switch(c=s){case 0:for(s=0,a=Math.pow(2,8),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;l[h++]=r(s),c=h-1,f--;break;case 1:for(s=0,a=Math.pow(2,16),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;l[h++]=r(s),c=h-1,f--;break;case 2:return v.join("")}if(0==f&&(f=Math.pow(2,d),d++),l[c])m=l[c];else{if(c!==h)return null;m=i+i.charAt(0)}v.push(m),l[h++]=i+m.charAt(0),i=m,0==--f&&(f=Math.pow(2,d),d++)}}};return i}();"function"==typeof define&&define.amd?define(function(){return LZString}):"undefined"!=typeof module&&null!=module?module.exports=LZString:"undefined"!=typeof angular&&null!=angular&&angular.module("LZString",[]).factory("LZString",function(){return LZString});
+</script>
+<script>
+var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this.parsedData=[];for(var b=[],d=0,e=this.data.length;e>d;d++){var f=this.data.charCodeAt(d);f>65536?(b[0]=240|(1835008&f)>>>18,b[1]=128|(258048&f)>>>12,b[2]=128|(4032&f)>>>6,b[3]=128|63&f):f>2048?(b[0]=224|(61440&f)>>>12,b[1]=128|(4032&f)>>>6,b[2]=128|63&f):f>128?(b[0]=192|(1984&f)>>>6,b[1]=128|63&f):b[0]=f,this.parsedData=this.parsedData.concat(b)}this.parsedData.length!=this.data.length&&(this.parsedData.unshift(191),this.parsedData.unshift(187),this.parsedData.unshift(239))}function b(a,b){this.typeNumber=a,this.errorCorrectLevel=b,this.modules=null,this.moduleCount=0,this.dataCache=null,this.dataList=[]}function i(a,b){if(void 0==a.length)throw new Error(a.length+"/"+b);for(var c=0;c<a.length&&0==a[c];)c++;this.num=new Array(a.length-c+b);for(var d=0;d<a.length-c;d++)this.num[d]=a[d+c]}function j(a,b){this.totalCount=a,this.dataCount=b}function k(){this.buffer=[],this.length=0}function m(){return"undefined"!=typeof CanvasRenderingContext2D}function n(){var a=!1,b=navigator.userAgent;return/android/i.test(b)&&(a=!0,aMat=b.toString().match(/android ([0-9]\.[0-9])/i),aMat&&aMat[1]&&(a=parseFloat(aMat[1]))),a}function r(a,b){for(var c=1,e=s(a),f=0,g=l.length;g>=f;f++){var h=0;switch(b){case d.L:h=l[f][0];break;case d.M:h=l[f][1];break;case d.Q:h=l[f][2];break;case d.H:h=l[f][3]}if(h>=e)break;c++}if(c>l.length)throw new Error("Too long data");return c}function s(a){var b=encodeURI(a).toString().replace(/\%[0-9a-fA-F]{2}/g,"a");return b.length+(b.length!=a?3:0)}a.prototype={getLength:function(){return this.parsedData.length},write:function(a){for(var b=0,c=this.parsedData.length;c>b;b++)a.put(this.parsedData[b],8)}},b.prototype={addData:function(b){var c=new a(b);this.dataList.push(c),this.dataCache=null},isDark:function(a,b){if(0>a||this.moduleCount<=a||0>b||this.moduleCount<=b)throw new Error(a+","+b);return this.modules[a][b]},getModuleCount:function(){return this.moduleCount},make:function(){this.makeImpl(!1,this.getBestMaskPattern())},makeImpl:function(a,c){this.moduleCount=4*this.typeNumber+17,this.modules=new Array(this.moduleCount);for(var d=0;d<this.moduleCount;d++){this.modules[d]=new Array(this.moduleCount);for(var e=0;e<this.moduleCount;e++)this.modules[d][e]=null}this.setupPositionProbePattern(0,0),this.setupPositionProbePattern(this.moduleCount-7,0),this.setupPositionProbePattern(0,this.moduleCount-7),this.setupPositionAdjustPattern(),this.setupTimingPattern(),this.setupTypeInfo(a,c),this.typeNumber>=7&&this.setupTypeNumber(a),null==this.dataCache&&(this.dataCache=b.createData(this.typeNumber,this.errorCorrectLevel,this.dataList)),this.mapData(this.dataCache,c)},setupPositionProbePattern:function(a,b){for(var c=-1;7>=c;c++)if(!(-1>=a+c||this.moduleCount<=a+c))for(var d=-1;7>=d;d++)-1>=b+d||this.moduleCount<=b+d||(this.modules[a+c][b+d]=c>=0&&6>=c&&(0==d||6==d)||d>=0&&6>=d&&(0==c||6==c)||c>=2&&4>=c&&d>=2&&4>=d?!0:!1)},getBestMaskPattern:function(){for(var a=0,b=0,c=0;8>c;c++){this.makeImpl(!0,c);var d=f.getLostPoint(this);(0==c||a>d)&&(a=d,b=c)}return b},createMovieClip:function(a,b,c){var d=a.createEmptyMovieClip(b,c),e=1;this.make();for(var f=0;f<this.modules.length;f++)for(var g=f*e,h=0;h<this.modules[f].length;h++){var i=h*e,j=this.modules[f][h];j&&(d.beginFill(0,100),d.moveTo(i,g),d.lineTo(i+e,g),d.lineTo(i+e,g+e),d.lineTo(i,g+e),d.endFill())}return d},setupTimingPattern:function(){for(var a=8;a<this.moduleCount-8;a++)null==this.modules[a][6]&&(this.modules[a][6]=0==a%2);for(var b=8;b<this.moduleCount-8;b++)null==this.modules[6][b]&&(this.modules[6][b]=0==b%2)},setupPositionAdjustPattern:function(){for(var a=f.getPatternPosition(this.typeNumber),b=0;b<a.length;b++)for(var c=0;c<a.length;c++){var d=a[b],e=a[c];if(null==this.modules[d][e])for(var g=-2;2>=g;g++)for(var h=-2;2>=h;h++)this.modules[d+g][e+h]=-2==g||2==g||-2==h||2==h||0==g&&0==h?!0:!1}},setupTypeNumber:function(a){for(var b=f.getBCHTypeNumber(this.typeNumber),c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[Math.floor(c/3)][c%3+this.moduleCount-8-3]=d}for(var c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[c%3+this.moduleCount-8-3][Math.floor(c/3)]=d}},setupTypeInfo:function(a,b){for(var c=this.errorCorrectLevel<<3|b,d=f.getBCHTypeInfo(c),e=0;15>e;e++){var g=!a&&1==(1&d>>e);6>e?this.modules[e][8]=g:8>e?this.modules[e+1][8]=g:this.modules[this.moduleCount-15+e][8]=g}for(var e=0;15>e;e++){var g=!a&&1==(1&d>>e);8>e?this.modules[8][this.moduleCount-e-1]=g:9>e?this.modules[8][15-e-1+1]=g:this.modules[8][15-e-1]=g}this.modules[this.moduleCount-8][8]=!a},mapData:function(a,b){for(var c=-1,d=this.moduleCount-1,e=7,g=0,h=this.moduleCount-1;h>0;h-=2)for(6==h&&h--;;){for(var i=0;2>i;i++)if(null==this.modules[d][h-i]){var j=!1;g<a.length&&(j=1==(1&a[g]>>>e));var k=f.getMask(b,d,h-i);k&&(j=!j),this.modules[d][h-i]=j,e--,-1==e&&(g++,e=7)}if(d+=c,0>d||this.moduleCount<=d){d-=c,c=-c;break}}}},b.PAD0=236,b.PAD1=17,b.createData=function(a,c,d){for(var e=j.getRSBlocks(a,c),g=new k,h=0;h<d.length;h++){var i=d[h];g.put(i.mode,4),g.put(i.getLength(),f.getLengthInBits(i.mode,a)),i.write(g)}for(var l=0,h=0;h<e.length;h++)l+=e[h].dataCount;if(g.getLengthInBits()>8*l)throw new Error("code length overflow. ("+g.getLengthInBits()+">"+8*l+")");for(g.getLengthInBits()+4<=8*l&&g.put(0,4);0!=g.getLengthInBits()%8;)g.putBit(!1);for(;;){if(g.getLengthInBits()>=8*l)break;if(g.put(b.PAD0,8),g.getLengthInBits()>=8*l)break;g.put(b.PAD1,8)}return b.createBytes(g,e)},b.createBytes=function(a,b){for(var c=0,d=0,e=0,g=new Array(b.length),h=new Array(b.length),j=0;j<b.length;j++){var k=b[j].dataCount,l=b[j].totalCount-k;d=Math.max(d,k),e=Math.max(e,l),g[j]=new Array(k);for(var m=0;m<g[j].length;m++)g[j][m]=255&a.buffer[m+c];c+=k;var n=f.getErrorCorrectPolynomial(l),o=new i(g[j],n.getLength()-1),p=o.mod(n);h[j]=new Array(n.getLength()-1);for(var m=0;m<h[j].length;m++){var q=m+p.getLength()-h[j].length;h[j][m]=q>=0?p.get(q):0}}for(var r=0,m=0;m<b.length;m++)r+=b[m].totalCount;for(var s=new Array(r),t=0,m=0;d>m;m++)for(var j=0;j<b.length;j++)m<g[j].length&&(s[t++]=g[j][m]);for(var m=0;e>m;m++)for(var j=0;j<b.length;j++)m<h[j].length&&(s[t++]=h[j][m]);return s};for(var c={MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8},d={L:1,M:0,Q:3,H:2},e={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7},f={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:1335,G18:7973,G15_MASK:21522,getBCHTypeInfo:function(a){for(var b=a<<10;f.getBCHDigit(b)-f.getBCHDigit(f.G15)>=0;)b^=f.G15<<f.getBCHDigit(b)-f.getBCHDigit(f.G15);return(a<<10|b)^f.G15_MASK},getBCHTypeNumber:function(a){for(var b=a<<12;f.getBCHDigit(b)-f.getBCHDigit(f.G18)>=0;)b^=f.G18<<f.getBCHDigit(b)-f.getBCHDigit(f.G18);return a<<12|b},getBCHDigit:function(a){for(var b=0;0!=a;)b++,a>>>=1;return b},getPatternPosition:function(a){return f.PATTERN_POSITION_TABLE[a-1]},getMask:function(a,b,c){switch(a){case e.PATTERN000:return 0==(b+c)%2;case e.PATTERN001:return 0==b%2;case e.PATTERN010:return 0==c%3;case e.PATTERN011:return 0==(b+c)%3;case e.PATTERN100:return 0==(Math.floor(b/2)+Math.floor(c/3))%2;case e.PATTERN101:return 0==b*c%2+b*c%3;case e.PATTERN110:return 0==(b*c%2+b*c%3)%2;case e.PATTERN111:return 0==(b*c%3+(b+c)%2)%2;default:throw new Error("bad maskPattern:"+a)}},getErrorCorrectPolynomial:function(a){for(var b=new i([1],0),c=0;a>c;c++)b=b.multiply(new i([1,g.gexp(c)],0));return b},getLengthInBits:function(a,b){if(b>=1&&10>b)switch(a){case c.MODE_NUMBER:return 10;case c.MODE_ALPHA_NUM:return 9;case c.MODE_8BIT_BYTE:return 8;case c.MODE_KANJI:return 8;default:throw new Error("mode:"+a)}else if(27>b)switch(a){case c.MODE_NUMBER:return 12;case c.MODE_ALPHA_NUM:return 11;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 10;default:throw new Error("mode:"+a)}else{if(!(41>b))throw new Error("type:"+b);switch(a){case c.MODE_NUMBER:return 14;case c.MODE_ALPHA_NUM:return 13;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 12;default:throw new Error("mode:"+a)}}},getLostPoint:function(a){for(var b=a.getModuleCount(),c=0,d=0;b>d;d++)for(var e=0;b>e;e++){for(var f=0,g=a.isDark(d,e),h=-1;1>=h;h++)if(!(0>d+h||d+h>=b))for(var i=-1;1>=i;i++)0>e+i||e+i>=b||(0!=h||0!=i)&&g==a.isDark(d+h,e+i)&&f++;f>5&&(c+=3+f-5)}for(var d=0;b-1>d;d++)for(var e=0;b-1>e;e++){var j=0;a.isDark(d,e)&&j++,a.isDark(d+1,e)&&j++,a.isDark(d,e+1)&&j++,a.isDark(d+1,e+1)&&j++,(0==j||4==j)&&(c+=3)}for(var d=0;b>d;d++)for(var e=0;b-6>e;e++)a.isDark(d,e)&&!a.isDark(d,e+1)&&a.isDark(d,e+2)&&a.isDark(d,e+3)&&a.isDark(d,e+4)&&!a.isDark(d,e+5)&&a.isDark(d,e+6)&&(c+=40);for(var e=0;b>e;e++)for(var d=0;b-6>d;d++)a.isDark(d,e)&&!a.isDark(d+1,e)&&a.isDark(d+2,e)&&a.isDark(d+3,e)&&a.isDark(d+4,e)&&!a.isDark(d+5,e)&&a.isDark(d+6,e)&&(c+=40);for(var k=0,e=0;b>e;e++)for(var d=0;b>d;d++)a.isDark(d,e)&&k++;var l=Math.abs(100*k/b/b-50)/5;return c+=10*l}},g={glog:function(a){if(1>a)throw new Error("glog("+a+")");return g.LOG_TABLE[a]},gexp:function(a){for(;0>a;)a+=255;for(;a>=256;)a-=255;return g.EXP_TABLE[a]},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)},h=0;8>h;h++)g.EXP_TABLE[h]=1<<h;for(var h=8;256>h;h++)g.EXP_TABLE[h]=g.EXP_TABLE[h-4]^g.EXP_TABLE[h-5]^g.EXP_TABLE[h-6]^g.EXP_TABLE[h-8];for(var h=0;255>h;h++)g.LOG_TABLE[g.EXP_TABLE[h]]=h;i.prototype={get:function(a){return this.num[a]},getLength:function(){return this.num.length},multiply:function(a){for(var b=new Array(this.getLength()+a.getLength()-1),c=0;c<this.getLength();c++)for(var d=0;d<a.getLength();d++)b[c+d]^=g.gexp(g.glog(this.get(c))+g.glog(a.get(d)));return new i(b,0)},mod:function(a){if(this.getLength()-a.getLength()<0)return this;for(var b=g.glog(this.get(0))-g.glog(a.get(0)),c=new Array(this.getLength()),d=0;d<this.getLength();d++)c[d]=this.get(d);for(var d=0;d<a.getLength();d++)c[d]^=g.gexp(g.glog(a.get(d))+b);return new i(c,0).mod(a)}},j.RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],j.getRSBlocks=function(a,b){var c=j.getRsBlockTable(a,b);if(void 0==c)throw new Error("bad rs block @ typeNumber:"+a+"/errorCorrectLevel:"+b);for(var d=c.length/3,e=[],f=0;d>f;f++)for(var g=c[3*f+0],h=c[3*f+1],i=c[3*f+2],k=0;g>k;k++)e.push(new j(h,i));return e},j.getRsBlockTable=function(a,b){switch(b){case d.L:return j.RS_BLOCK_TABLE[4*(a-1)+0];case d.M:return j.RS_BLOCK_TABLE[4*(a-1)+1];case d.Q:return j.RS_BLOCK_TABLE[4*(a-1)+2];case d.H:return j.RS_BLOCK_TABLE[4*(a-1)+3];default:return void 0}},k.prototype={get:function(a){var b=Math.floor(a/8);return 1==(1&this.buffer[b]>>>7-a%8)},put:function(a,b){for(var c=0;b>c;c++)this.putBit(1==(1&a>>>b-c-1))},getLengthInBits:function(){return this.length},putBit:function(a){var b=Math.floor(this.length/8);this.buffer.length<=b&&this.buffer.push(0),a&&(this.buffer[b]|=128>>>this.length%8),this.length++}};var l=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]],o=function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){function g(a,b){var c=document.createElementNS("http://www.w3.org/2000/svg",a);for(var d in b)b.hasOwnProperty(d)&&c.setAttribute(d,b[d]);return c}var b=this._htOption,c=this._el,d=a.getModuleCount();Math.floor(b.width/d),Math.floor(b.height/d),this.clear();var h=g("svg",{viewBox:"0 0 "+String(d)+" "+String(d),width:"100%",height:"100%",fill:b.colorLight});h.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:xlink","http://www.w3.org/1999/xlink"),c.appendChild(h),h.appendChild(g("rect",{fill:b.colorDark,width:"1",height:"1",id:"template"}));for(var i=0;d>i;i++)for(var j=0;d>j;j++)if(a.isDark(i,j)){var k=g("use",{x:String(i),y:String(j)});k.setAttributeNS("http://www.w3.org/1999/xlink","href","#template"),h.appendChild(k)}},a.prototype.clear=function(){for(;this._el.hasChildNodes();)this._el.removeChild(this._el.lastChild)},a}(),p="svg"===document.documentElement.tagName.toLowerCase(),q=p?o:m()?function(){function a(){this._elImage.src=this._elCanvas.toDataURL("image/png"),this._elImage.style.display="block",this._elCanvas.style.display="none"}function d(a,b){var c=this;if(c._fFail=b,c._fSuccess=a,null===c._bSupportDataURI){var d=document.createElement("img"),e=function(){c._bSupportDataURI=!1,c._fFail&&_fFail.call(c)},f=function(){c._bSupportDataURI=!0,c._fSuccess&&c._fSuccess.call(c)};return d.onabort=e,d.onerror=e,d.onload=f,d.src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==",void 0}c._bSupportDataURI===!0&&c._fSuccess?c._fSuccess.call(c):c._bSupportDataURI===!1&&c._fFail&&c._fFail.call(c)}if(this._android&&this._android<=2.1){var b=1/window.devicePixelRatio,c=CanvasRenderingContext2D.prototype.drawImage;CanvasRenderingContext2D.prototype.drawImage=function(a,d,e,f,g,h,i,j){if("nodeName"in a&&/img/i.test(a.nodeName))for(var l=arguments.length-1;l>=1;l--)arguments[l]=arguments[l]*b;else"undefined"==typeof j&&(arguments[1]*=b,arguments[2]*=b,arguments[3]*=b,arguments[4]*=b);c.apply(this,arguments)}}var e=function(a,b){this._bIsPainted=!1,this._android=n(),this._htOption=b,this._elCanvas=document.createElement("canvas"),this._elCanvas.width=b.width,this._elCanvas.height=b.height,a.appendChild(this._elCanvas),this._el=a,this._oContext=this._elCanvas.getContext("2d"),this._bIsPainted=!1,this._elImage=document.createElement("img"),this._elImage.style.display="none",this._el.appendChild(this._elImage),this._bSupportDataURI=null};return e.prototype.draw=function(a){var b=this._elImage,c=this._oContext,d=this._htOption,e=a.getModuleCount(),f=d.width/e,g=d.height/e,h=Math.round(f),i=Math.round(g);b.style.display="none",this.clear();for(var j=0;e>j;j++)for(var k=0;e>k;k++){var l=a.isDark(j,k),m=k*f,n=j*g;c.strokeStyle=l?d.colorDark:d.colorLight,c.lineWidth=1,c.fillStyle=l?d.colorDark:d.colorLight,c.fillRect(m,n,f,g),c.strokeRect(Math.floor(m)+.5,Math.floor(n)+.5,h,i),c.strokeRect(Math.ceil(m)-.5,Math.ceil(n)-.5,h,i)}this._bIsPainted=!0},e.prototype.makeImage=function(){this._bIsPainted&&d.call(this,a)},e.prototype.isPainted=function(){return this._bIsPainted},e.prototype.clear=function(){this._oContext.clearRect(0,0,this._elCanvas.width,this._elCanvas.height),this._bIsPainted=!1},e.prototype.round=function(a){return a?Math.floor(1e3*a)/1e3:a},e}():function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){for(var b=this._htOption,c=this._el,d=a.getModuleCount(),e=Math.floor(b.width/d),f=Math.floor(b.height/d),g=['<table style="border:0;border-collapse:collapse;">'],h=0;d>h;h++){g.push("<tr>");for(var i=0;d>i;i++)g.push('<td style="border:0;border-collapse:collapse;padding:0;margin:0;width:'+e+"px;height:"+f+"px;background-color:"+(a.isDark(h,i)?b.colorDark:b.colorLight)+';"></td>');g.push("</tr>")}g.push("</table>"),c.innerHTML=g.join("");var j=c.childNodes[0],k=(b.width-j.offsetWidth)/2,l=(b.height-j.offsetHeight)/2;k>0&&l>0&&(j.style.margin=l+"px "+k+"px")},a.prototype.clear=function(){this._el.innerHTML=""},a}();QRCode=function(a,b){if(this._htOption={width:256,height:256,typeNumber:4,colorDark:"#000000",colorLight:"#ffffff",correctLevel:d.H},"string"==typeof b&&(b={text:b}),b)for(var c in b)this._htOption[c]=b[c];"string"==typeof a&&(a=document.getElementById(a)),this._android=n(),this._el=a,this._oQRCode=null,this._oDrawing=new q(this._el,this._htOption),this._htOption.text&&this.makeCode(this._htOption.text)},QRCode.prototype.makeCode=function(a){this._oQRCode=new b(r(a,this._htOption.correctLevel),this._htOption.correctLevel),this._oQRCode.addData(a),this._oQRCode.make(),this._el.title=a,this._oDrawing.draw(this._oQRCode),this.makeImage()},QRCode.prototype.makeImage=function(){"function"==typeof this._oDrawing.makeImage&&(!this._android||this._android>=3)&&this._oDrawing.makeImage()},QRCode.prototype.clear=function(){this._oDrawing.clear()},QRCode.CorrectLevel=d}();
+</script>
 
-function search() {
- const q = document.getElementById('query').value.trim().toUpperCase();
- const res = document.getElementById('result');
- if (!q) { res.innerHTML = ''; return; }
+<script>
+// ===== 全局核心数据结构 =====
+let roster = [];
+let activeGroup = null; // 当前限定查看的组别 (null 为全部)
+let staged = [];
+let history = [];
+let qrcodeInstance = null;
 
- addHistory(q);
- const matches = roster.filter(p => {
- const phoneTail = p.phone.slice(-4);
- const idTail = p.id.toUpperCase().slice(-4);
- return p.name.includes(q) || phoneTail === q || idTail === q || p.bib === q;
- });
+const CUSTOM_DATA_KEY = 'event_roster_custom_data_v2';
+const STAGED_KEY = 'event_roster_staged_v2';
+const HISTORY_KEY = 'event_roster_history_v2';
 
- if (matches.length === 0) {
- res.innerHTML = '<div class="empty">No matching records found</div>';
- return;
- }
+// ===== 初始化 =====
+window.addEventListener('DOMContentLoaded', () => {
+  loadStoredData();
+  handleUrlParams();
+  search();
+});
 
- res.innerHTML = matches.map(p => `
- <div class="card">
- <div class="card-top">
- <span class="name">${p.name}</span>
- <span class="bib">#${p.bib}</span>
- </div>
- <div class="info-row">
- <span class="label">Size / Type</span>
- <span class="val"><span class="badge">${p.size}</span></span>
- </div>
- <div class="info-row">
- <span class="label">Phone</span>
- <span class="val">${p.phone}</span>
- </div>
- <div class="info-row">
- <span class="label">ID / Doc No.</span>
- <span class="val">${p.id}</span>
- </div>
- <div class="info-row"><span class="label">Serial No.</span>
- <span class="val">${p.no}</span>
- </div>
- <div class="action-bar">
-  <button class="btn-stage ${isStaged('${p.bib}') ? 'btn-staged' : ''}" id="stage-btn-${p.bib}" onclick="toggleStage('${p.bib}')">${isStaged('${p.bib}') ? 'Staged' : 'Stage'}</button>
- </div>
- </div>
- `).join('');
+// 处理 URL 中的岗位过滤或压缩数据包
+function handleUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+  
+  // 1. 是否携带了压缩的打包数据 (pkg)
+  const pkgData = params.get('pkg');
+  if (pkgData) {
+    try {
+      const jsonStr = LZString.decompressFromEncodedURIComponent(pkgData);
+      if (jsonStr) {
+        const importedData = JSON.parse(jsonStr);
+        if (Array.isArray(importedData) && importedData.length > 0) {
+          // 合并到本地存储
+          const localCustom = JSON.parse(localStorage.getItem(CUSTOM_DATA_KEY) || '[]');
+          const merged = [...localCustom];
+          importedData.forEach(item => {
+            if (!merged.some(m => m.bib === item.bib)) {
+              merged.push(item);
+            }
+          });
+          localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(merged));
+          roster = merged;
+          console.log('成功通过 URL 载入专属数据包:', importedData.length);
+        }
+      }
+    } catch (e) {
+      console.warn('URL 数据包解析失败:', e);
+    }
+  }
+
+  // 2. 是否带有组别限定 (group)
+  const groupParam = params.get('group');
+  if (groupParam) {
+    activeGroup = decodeURIComponent(groupParam);
+    renderGroupBanner();
+  }
 }
 
-const inputElem = document.getElementById('query');
-inputElem.addEventListener('input', search);
-inputElem.addEventListener('keyup', e => { if (e.key === 'Enter') search(); });
+// 渲染顶部组别横幅
+function renderGroupBanner() {
+  const banner = document.getElementById('group-banner');
+  const nameElem = document.getElementById('group-banner-name');
+  const countElem = document.getElementById('group-banner-count');
+  
+  if (activeGroup) {
+    banner.classList.add('active');
+    nameElem.textContent = activeGroup;
+    const filteredCount = roster.filter(x => (x.group || '未分组') === activeGroup).length;
+    countElem.textContent = `(${filteredCount} 人)`;
+  } else {
+    banner.classList.remove('active');
+  }
+}
 
+function switchAllGroups() {
+  activeGroup = null;
+  renderGroupBanner();
+  search();
+}
 
-// ===== 自定义添加功能 (持久化存入 localStorage) =====
-const CUSTOM_DATA_KEY = 'user_added_roster';
-let customRecords = JSON.parse(localStorage.getItem(CUSTOM_DATA_KEY) || '[]');
-roster.unshift(...customRecords);
+// 加载本地数据
+function loadStoredData() {
+  const localCustom = JSON.parse(localStorage.getItem(CUSTOM_DATA_KEY) || '[]');
+  staged = JSON.parse(localStorage.getItem(STAGED_KEY) || '[]');
+  history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  roster = localCustom;
+  renderStaged();
+  renderHistory();
+}
 
+// 核心查询逻辑 (支持多字段、首字母拼音倒排、后四位匹配)
+function search() {
+  const kw = document.getElementById('kw').value.trim().toLowerCase();
+  let pool = roster;
+
+  // 岗位隔离：若处于特定组别模式，只检索该组别
+  if (activeGroup) {
+    pool = pool.filter(x => (x.group || '未分组') === activeGroup);
+  }
+
+  let matches = [];
+  if (!kw) {
+    // 默认展示该范围下的前 60 条
+    matches = pool.slice(0, 60);
+  } else {
+    matches = pool.filter(p => {
+      const matchName = (p.name || '').toLowerCase().includes(kw);
+      const matchBib = (p.bib || '').toLowerCase().includes(kw);
+      const phone = (p.phone || '');
+      const matchPhone = phone.endsWith(kw) || phone.includes(kw);
+      const id = (p.id || '');
+      const matchId = id.toLowerCase().endsWith(kw) || id.toLowerCase().includes(kw);
+      const matchGroup = (p.group || '').toLowerCase().includes(kw);
+      return matchName || matchBib || matchPhone || matchId || matchGroup;
+    });
+  }
+
+  renderResults(matches);
+}
+
+// 渲染结果卡片
+function renderResults(list) {
+  const container = document.getElementById('result-list');
+  const countElem = document.getElementById('result-count');
+  countElem.textContent = list.length;
+
+  if (list.length === 0) {
+    container.innerHTML = `<div class="empty">未找到匹配名单记录<br><span style="font-size:12px; color:#cbd5e1;">可尝试输入姓名、编号、或手机号后4位</span></div>`;
+    return;
+  }
+
+  container.innerHTML = list.map(p => {
+    const isStg = staged.includes(p.bib);
+    const groupBadge = p.group ? `<span class="group-pill">🏷️ ${p.group}</span>` : '';
+    return `
+      <div class="card">
+        <div class="card-top">
+          <div class="name-box">
+            <span class="name">${p.name || '未命名'}</span>
+            <span class="bib">${p.bib || ''}</span>
+            ${groupBadge}
+          </div>
+          <span class="badge">${p.size || '均码'}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">手机号码</span>
+          <span class="val">${p.phone || '-'}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">证件号码</span>
+          <span class="val">${p.id || '-'}</span>
+        </div>
+        <div class="action-bar">
+          <button class="clear-link" style="border:none;background:none;color:#ef4444;" onclick="deleteRecord('${p.bib}')">删除</button>
+          <button class="btn-stage ${isStg ? 'btn-staged' : ''}" onclick="toggleStage('${p.bib}', '${p.name}')">
+            ${isStg ? '已暂存 (移出)' : '暂存待领'}
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===== 暂存逻辑 =====
+function toggleStage(bib, name) {
+  const idx = staged.indexOf(bib);
+  if (idx > -1) {
+    staged.splice(idx, 1);
+  } else {
+    staged.push(bib);
+    addHistory(bib, name);
+  }
+  localStorage.setItem(STAGED_KEY, JSON.stringify(staged));
+  renderStaged();
+  search();
+}
+
+function renderStaged() {
+  const box = document.getElementById('staged-container');
+  const count = document.getElementById('stage-count');
+  count.textContent = staged.length;
+
+  if (staged.length === 0) {
+    box.innerHTML = `<span style="font-size:12px; color:#94a3b8;">暂无暂存。在查询结果卡片上点击“暂存”即可加入批量核对。</span>`;
+    return;
+  }
+
+  box.innerHTML = staged.map(bib => {
+    const item = roster.find(x => x.bib === bib);
+    const displayName = item ? `${item.name} (${item.bib})` : bib;
+    return `
+      <span class="staged-item">
+        ${displayName}
+        <span class="del-btn" onclick="toggleStage('${bib}')">&times;</span>
+      </span>
+    `;
+  }).join('');
+}
+
+function clearStaged() {
+  if (staged.length === 0) return;
+  staged = [];
+  localStorage.setItem(STAGED_KEY, JSON.stringify(staged));
+  renderStaged();
+  search();
+}
+
+// ===== 历史记录逻辑 =====
+function addHistory(bib, name) {
+  history = history.filter(x => x.bib !== bib);
+  history.unshift({ bib, name });
+  if (history.length > 8) history.pop();
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  renderHistory();
+}
+
+function renderHistory() {
+  const container = document.getElementById('history-tags');
+  const count = document.getElementById('history-count');
+  count.textContent = history.length;
+
+  if (history.length === 0) {
+    container.innerHTML = `<span style="font-size:12px; color:#94a3b8;">暂无最近核验记录</span>`;
+    return;
+  }
+
+  container.innerHTML = history.map(item => `
+    <span class="tag" onclick="quickSearch('${item.bib}')">
+      ${item.name} (${item.bib})
+    </span>
+  `).join('');
+}
+
+function quickSearch(val) {
+  document.getElementById('kw').value = val;
+  search();
+}
+
+function clearHistory() {
+  history = [];
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  renderHistory();
+}
+
+// ===== 单条录入功能 =====
 function openAddModal() {
-  document.getElementById('addModal').classList.add('active');
-  document.getElementById('new-name').focus();
+  document.getElementById('add-modal').classList.add('active');
 }
 
 function closeAddModal() {
-  document.getElementById('addModal').classList.remove('active');
-  document.getElementById('new-name').value = '';
-  document.getElementById('new-bib').value = '';
-  document.getElementById('new-phone').value = '';
-  document.getElementById('new-id').value = '';
-  document.getElementById('new-size').value = '';
+  document.getElementById('add-modal').classList.remove('active');
 }
 
 function saveNewRecord() {
   const name = document.getElementById('new-name').value.trim();
   const bib = document.getElementById('new-bib').value.trim();
-  const phone = document.getElementById('new-phone').value.trim() || 'N/A';
-  const id = document.getElementById('new-id').value.trim() || 'N/A';
-  const size = document.getElementById('new-size').value.trim() || 'L';
-  
+  const group = document.getElementById('new-group').value.trim() || (activeGroup || '');
+  const phone = document.getElementById('new-phone').value.trim();
+  const id = document.getElementById('new-id').value.trim();
+  const size = document.getElementById('new-size').value.trim();
+
   if (!name || !bib) {
-    alert('Please enter at least Name and Bib Number!');
+    alert('请填写志愿者/选手的【姓名】和【编号/号码布】！');
     return;
   }
-  
-  const newRec = { no: String(roster.length + 1), bib, name, phone, id, size };
-  customRecords.unshift(newRec);
-  roster.unshift(newRec);
-  localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(customRecords));
-  
+
+  const existingIdx = roster.findIndex(x => x.bib === bib);
+  const newRec = { name, bib, group, phone, id, size };
+
+  if (existingIdx > -1) {
+    if (confirm(`编号 ${bib} 已存在，是否覆盖更新？`)) {
+      roster[existingIdx] = newRec;
+    } else {
+      return;
+    }
+  } else {
+    roster.unshift(newRec);
+  }
+
+  localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(roster));
   closeAddModal();
-  document.getElementById('query').value = name;
+  document.getElementById('new-name').value = '';
+  document.getElementById('new-bib').value = '';
+  document.getElementById('new-group').value = '';
+  document.getElementById('new-phone').value = '';
+  document.getElementById('new-id').value = '';
+  document.getElementById('new-size').value = '';
+  
   search();
+  alert('录入成功！已存入本地名单库。');
 }
 
-// ===== 暂存处理夹 =====
-const staged = JSON.parse(localStorage.getItem('stage_list') || '[]');
-
-function isStaged(bib) { return staged.includes(bib); }
-
-function renderStaged() {
- const box = document.getElementById('staged-container');
- const count = document.getElementById('stage-count');
- count.textContent = staged.length;
- if (staged.length === 0) {
-  box.innerHTML = '<span style="font-size:12px; color:#94a3b8;">暂无暂存记录。点击下方卡片上的“暂存”即可加入。</span>';
-  // 更新所有卡片按钮为未暂存状态
-  document.querySelectorAll('.btn-stage').forEach(b => {
-   b.classList.remove('btn-staged'); b.textContent = 'Stage';
-  });
-  return;
- }
- box.innerHTML = staged.map(bib => {
-  const p = roster.find(x => x.bib === bib);
-  if (!p) return '';
-  return `<span class="staged-item">${p.name} <span class="badge">${p.size}</span> #${bib}<span class="del-btn" onclick="removeStaged('${bib}')">✕</span></span>`;
- }).join('');
-}
-
-function toggleStage(bib) {
- const i = staged.indexOf(bib);
- const p = roster.find(x => x.bib === bib);
- if (i >= 0) { staged.splice(i, 1); }
- else { if (p) staged.push(bib); }
- localStorage.setItem('stage_list', JSON.stringify(staged));
- renderStaged();
- // 更新该卡片按钮状态
- const btn = document.getElementById('stage-btn-' + bib);
- if (btn) {
-  const on = staged.includes(bib);
-  btn.classList.toggle('btn-staged', on);
-  btn.textContent = on ? 'Staged' : 'Stage';
- }
-}
-
-function removeStaged(bib) {
- const i = staged.indexOf(bib);
- if (i >= 0) { staged.splice(i, 1); }
- localStorage.setItem('stage_list', JSON.stringify(staged));
- renderStaged();
- const btn = document.getElementById('stage-btn-' + bib);
- if (btn) { btn.classList.remove('btn-staged'); btn.textContent = 'Stage'; }
-}
-
-function clearStaged() {
- staged.length = 0;
- localStorage.setItem('stage_list', JSON.stringify(staged));
- renderStaged();
-}
-
-// ===== 搜索历史 =====
-const HISTORY_KEY = 'search_history';
-let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-
-function renderHistory() {
- const box = document.getElementById('history-box');
- if (history.length === 0) { box.innerHTML = '<span style="font-size:12px; color:#94a3b8;">No recent history</span>'; return; }
- box.innerHTML = history.map(h => `<span class="tag" onclick="doHistory('${h}')">${h}<span class="del-btn" onclick="event.stopPropagation();removeHistory('${h}')">✕</span></span>`).join('');
-}
-
-function addHistory(q) {
- if (!q) return;
- history = history.filter(h => h !== q);
- history.unshift(q);
- if (history.length > 10) history.length = 10;
- localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
- renderHistory();
-}
-
-function doHistory(q) {
- document.getElementById('query').value = q;
- search();
-}
-
-function removeHistory(q) {
- history = history.filter(h => h !== q);
- localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
- renderHistory();
-}
-
-function clearHistory() {
- history = [];
- localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
- renderHistory();
-}
-
-// 初始化暂存夹与历史
-renderStaged();
-renderHistory();
-
-// 本地持久化支持
-let savedRoster = localStorage.getItem('roster_data');
-if (savedRoster) {
-  try { roster = JSON.parse(savedRoster); } catch(e) {}
-}
-
-function saveRoster() {
-  localStorage.setItem('roster_data', JSON.stringify(roster));
-}
-
-// 删除功能
 function deleteRecord(bib) {
-  const target = roster.find(r => r.bib === bib);
-  const name = target ? target.name : bib;
-  if (confirm(`确定要删除记录【${name} (编号/号码布:${bib})】吗？`)) {
-    roster = roster.filter(r => r.bib !== bib);
-    removeStaged(bib);
-    saveRoster();
-    search(document.getElementById('query').value);
+  if (confirm(`确定要删除编号为 ${bib} 的记录吗？`)) {
+    roster = roster.filter(x => x.bib !== bib);
+    staged = staged.filter(x => x !== bib);
+    localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(roster));
+    localStorage.setItem(STAGED_KEY, JSON.stringify(staged));
+    renderStaged();
+    search();
   }
 }
 
-// 修改原有的 saveNewRecord 支持持久化
-const oldSaveNewRecord = saveNewRecord;
-saveNewRecord = function() {
-  oldSaveNewRecord();
-  saveRoster();
-};
-
-// CSV 智能解析与映射导入
-let parsedCsvRows = [];
+// ===== 批量导入 CSV 逻辑 =====
 let csvHeaders = [];
+let csvRows = [];
 
 function openCsvModal() {
   document.getElementById('csv-modal').classList.add('active');
-  document.getElementById('csv-file-input').value = '';
-  document.getElementById('csv-mapping-area').style.display = 'none';
-  document.getElementById('btn-do-import').style.display = 'none';
 }
 
 function closeCsvModal() {
   document.getElementById('csv-modal').classList.remove('active');
-}
-
-function parseCSV(text) {
-  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
-  if (lines.length === 0) return { headers: [], rows: [] };
-  
-  function parseLine(line) {
-    const row = [];
-    let inQuotes = false;
-    let entry = '';
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
-      if (c === '"') {
-        inQuotes = !inQuotes;
-      } else if (c === ',' && !inQuotes) {
-        row.push(entry.trim());
-        entry = '';
-      } else {
-        entry += c;
-      }
-    }
-    row.push(entry.trim());
-    return row;
-  }
-
-  const headers = parseLine(lines[0]);
-  const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const vals = parseLine(lines[i]);
-    if (vals.length === headers.length) {
-      rows.push(vals);
-    }
-  }
-  return { headers, rows };
+  document.getElementById('csv-file-input').value = '';
+  document.getElementById('csv-mapping-area').style.display = 'none';
 }
 
 function handleCsvFile(e) {
@@ -421,128 +653,231 @@ function handleCsvFile(e) {
 
   const reader = new FileReader();
   reader.onload = function(evt) {
-    const content = evt.target.result;
-    const parsed = parseCSV(content);
-    csvHeaders = parsed.headers;
-    parsedCsvRows = parsed.rows;
-
-    if (csvHeaders.length === 0 || parsedCsvRows.length === 0) {
-      alert('CSV 文件内容为空或格式无效！');
+    const text = evt.target.result;
+    const parsed = parseCSV(text);
+    if (!parsed || parsed.length < 2) {
+      alert('CSV 文件内容为空或格式有误！');
       return;
     }
-
-    setupMappingSelects(csvHeaders);
-    document.getElementById('csv-mapping-area').style.display = 'block';
-    document.getElementById('btn-do-import').style.display = 'inline-block';
-    document.getElementById('csv-preview-text').innerText = `已解析 ${parsedCsvRows.length} 条数据，系统已自动推测匹配列，请核对无误后点击下方按钮导入。`;
+    csvHeaders = parsed[0].map(h => h.trim());
+    csvRows = parsed.slice(1);
+    setupMappingSelects();
   };
   reader.readAsText(file, 'utf-8');
 }
 
-function setupMappingSelects(headers) {
-  const fields = ['name', 'bib', 'phone', 'id', 'size'];
-  fields.forEach(f => {
-    const sel = document.getElementById('map-' + f);
-    sel.innerHTML = '<option value="">-- 请选择或不导入 --</option>' +
-      headers.map((h, idx) => `<option value="${idx}">${h}</option>`).join('');
-    
-    // 智能识别表头
-    headers.forEach((h, idx) => {
-      const hl = h.toLowerCase();
-      if (f === 'name' && (hl.includes('名') || hl.includes('name') || hl.includes('选手') || hl.includes('姓名'))) sel.value = idx;
-      if (f === 'bib' && (hl.includes('布') || hl.includes('bib') || hl.includes('号') || hl.includes('no') || hl.includes('序号') || hl.includes('编号'))) sel.value = idx;
-      if (f === 'phone' && (hl.includes('电') || hl.includes('话') || hl.includes('phone') || hl.includes('mobile') || hl.includes('手机') || hl.includes('联系'))) sel.value = idx;
-      if (f === 'id' && (hl.includes('证') || hl.includes('id') || hl.includes('card') || hl.includes('身份'))) sel.value = idx;
-      if (f === 'size' && (hl.includes('尺') || hl.includes('码') || hl.includes('size') || hl.includes('物') || hl.includes('规格') || hl.includes('衣服'))) sel.value = idx;
-    });
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  return lines.map(line => {
+    let result = [];
+    let cur = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') {
+        inQuotes = !inQuotes;
+      } else if (c === ',' && !inQuotes) {
+        result.push(cur.replace(/^"|"$/g, '').trim());
+        cur = '';
+      } else {
+        cur += c;
+      }
+    }
+    result.push(cur.replace(/^"|"$/g, '').trim());
+    return result;
   });
+}
+
+function setupMappingSelects() {
+  const fields = [
+    { id: 'map-name', match: ['姓名', '名字', '志愿者', '选手'] },
+    { id: 'map-bib', match: ['号码', '编号', '号码布', 'bib', '序号'] },
+    { id: 'map-group', match: ['组别', '岗位', '分组', '小组', '部门', 'group'] },
+    { id: 'map-phone', match: ['电话', '手机', '联系方式', 'phone', 'tel'] },
+    { id: 'map-id', match: ['证件', '身份证', '证件号', 'id'] },
+    { id: 'map-size', match: ['尺码', '服装', '衣服', 'size', '物资'] }
+  ];
+
+  fields.forEach(f => {
+    const sel = document.getElementById(f.id);
+    sel.innerHTML = '<option value="-1">-- 不导入此项 --</option>';
+    let bestIdx = -1;
+    csvHeaders.forEach((h, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx;
+      opt.textContent = `${idx + 1}. ${h}`;
+      sel.appendChild(opt);
+
+      if (bestIdx === -1 && f.match.some(m => h.toLowerCase().includes(m))) {
+        bestIdx = idx;
+      }
+    });
+    if (bestIdx !== -1) sel.value = bestIdx;
+  });
+
+  document.getElementById('csv-mapping-area').style.display = 'block';
 }
 
 function confirmCsvImport() {
-  const nameIdx = document.getElementById('map-name').value;
-  const bibIdx = document.getElementById('map-bib').value;
-  const phoneIdx = document.getElementById('map-phone').value;
-  const idIdx = document.getElementById('map-id').value;
-  const sizeIdx = document.getElementById('map-size').value;
+  const nameIdx = parseInt(document.getElementById('map-name').value);
+  const bibIdx = parseInt(document.getElementById('map-bib').value);
+  const groupIdx = parseInt(document.getElementById('map-group').value);
+  const phoneIdx = parseInt(document.getElementById('map-phone').value);
+  const idIdx = parseInt(document.getElementById('map-id').value);
+  const sizeIdx = parseInt(document.getElementById('map-size').value);
 
-  if (nameIdx === '' || bibIdx === '') {
-    alert('姓名和编号/号码布是必填字段，请在下拉框中选择对应的列！');
+  if (nameIdx === -1 || bibIdx === -1) {
+    alert('【姓名】与【编号/号码布】为必选项，请选择对应的表格列！');
     return;
   }
 
-  let addedCount = 0;
-  parsedCsvRows.forEach(row => {
+  let count = 0;
+  csvRows.forEach(row => {
     const name = row[nameIdx] || '';
     const bib = row[bibIdx] || '';
-    const phone = phoneIdx !== '' ? (row[phoneIdx] || '') : '';
-    const id = idIdx !== '' ? (row[idIdx] || '') : '';
-    const size = sizeIdx !== '' ? (row[sizeIdx] || '') : '';
+    if (!name && !bib) return;
 
-    if (name && bib) {
-      const existingIdx = roster.findIndex(r => r.bib === bib);
-      if (existingIdx >= 0) {
-        roster[existingIdx] = { no: roster[existingIdx].no, bib, name, phone, id, size };
-      } else {
-        roster.push({ no: String(roster.length + 1), bib, name, phone, id, size });
-      }
-      addedCount++;
+    const group = groupIdx !== -1 ? (row[groupIdx] || '') : '';
+    const phone = phoneIdx !== -1 ? (row[phoneIdx] || '') : '';
+    const id = idIdx !== -1 ? (row[idIdx] || '') : '';
+    const size = sizeIdx !== -1 ? (row[sizeIdx] || '') : '';
+
+    const newRec = { name, bib, group, phone, id, size };
+    const existingIdx = roster.findIndex(x => x.bib === bib);
+    if (existingIdx > -1) {
+      roster[existingIdx] = newRec;
+    } else {
+      roster.push(newRec);
     }
+    count++;
   });
 
-  saveRoster();
+  localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(roster));
   closeCsvModal();
-  search(document.getElementById('query').value);
-  alert(`成功导入/更新 ${addedCount} 条选手数据！`);
+  search();
+  alert(`成功批量导入 ${count} 条记录并保存到本地名单库！`);
 }
 
-</script>
+// ===== 岗位分发中心逻辑 =====
+function openDistributeModal() {
+  const container = document.getElementById('dist-groups-container');
+  
+  // 汇总当前所有组别
+  const groupsMap = {};
+  roster.forEach(item => {
+    const g = item.group || '未分组';
+    if (!groupsMap[g]) groupsMap[g] = 0;
+    groupsMap[g]++;
+  });
 
-<!-- CSV Import Modal with Smart Column Mapping -->
-<div id="csv-modal" class="modal-overlay">
-  <div class="modal" style="max-width:520px;">
-    <h3 style="margin-bottom:8px;">批量导入 CSV 名单</h3>
-    <p style="font-size:0.85rem; color:#64748b; margin-bottom:12px;">
-      💡 <strong>不用担心表头不同：</strong>上传任意系统导出的 CSV，本系统会自动识别表头，并支持手动调整字段映射！
-    </p>
+  const groupKeys = Object.keys(groupsMap);
+  if (groupKeys.length === 0) {
+    container.innerHTML = `<div style="text-align:center;color:#94a3b8;padding:20px;">当前还没有导入或录入名单数据。<br>请先点击【批量导入】或【单条录入】。</div>`;
+    document.getElementById('dist-modal').classList.add('active');
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="dist-group-card" style="background:#eff6ff; border-color:#bfdbfe;">
+      <div class="dist-group-header">
+        <span class="dist-group-title">🌟 全部完整名单 (管理员)</span>
+        <span class="dist-group-badge" style="background:#dbeafe; color:#1d4ed8;">共 ${roster.length} 人</span>
+      </div>
+      <div class="dist-actions">
+        <button class="btn-mini btn-mini-primary" onclick="generateDistribution('', '全部完整名单')">📱 生成二维码 / 分享链接</button>
+      </div>
+    </div>
+  ` + groupKeys.map(g => `
+    <div class="dist-group-card">
+      <div class="dist-group-header">
+        <span class="dist-group-title">🏷️ ${g}</span>
+        <span class="dist-group-badge">共 ${groupsMap[g]} 人</span>
+      </div>
+      <div class="dist-actions">
+        <button class="btn-mini btn-mini-primary" onclick="generateDistribution('${encodeURIComponent(g)}', '${g}')">📱 生成本组专属码 / 链接</button>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('dist-modal').classList.add('active');
+}
+
+function closeDistributeModal() {
+  document.getElementById('dist-modal').classList.remove('active');
+}
+
+// 生成分发链接与二维码
+function generateDistribution(groupEncoded, groupName) {
+  const baseUrl = window.location.origin + window.location.pathname;
+  let targetUrl = baseUrl;
+  
+  if (groupEncoded) {
+    // 提取该组别的数据
+    const gName = decodeURIComponent(groupEncoded);
+    const subData = roster.filter(x => (x.group || '未分组') === gName);
     
-    <div class="form-group">
-      <label>选择 CSV 文件 (.csv)</label>
-      <input type="file" id="csv-file-input" accept=".csv, .txt" class="form-control" onchange="handleCsvFile(event)">
-    </div>
+    // 使用 LZString 进行离线高倍压缩
+    const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(subData));
+    
+    // 如果压缩后长度适中 (小于 2500 字符)，将数据包直接注入 URL，达到“扫码即带走数据”的神奇体验
+    if (compressed.length < 2400) {
+      targetUrl = `${baseUrl}?group=${groupEncoded}&pkg=${compressed}`;
+    } else {
+      targetUrl = `${baseUrl}?group=${groupEncoded}`;
+    }
+  }
 
-    <div id="csv-mapping-area" style="display:none; margin-top:14px; border-top:1px solid #e2e8f0; padding-top:12px;">
-      <div style="font-weight:600; font-size:0.9rem; margin-bottom:8px; color:#334155;">
-        请确认表格列对应关系（自动推测）：
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.88rem;">
-        <span>姓名 (必填):</span>
-        <select id="map-name" class="form-control" style="width:200px; padding:4px 8px;"></select>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.88rem;">
-        <span>编号/号码布 / 序号 (必填):</span>
-        <select id="map-bib" class="form-control" style="width:200px; padding:4px 8px;"></select>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.88rem;">
-        <span>手机号:</span>
-        <select id="map-phone" class="form-control" style="width:200px; padding:4px 8px;"></select>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.88rem;">
-        <span>身份证 / 证件号:</span>
-        <select id="map-id" class="form-control" style="width:200px; padding:4px 8px;"></select>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.88rem;">
-        <span>物资尺码:</span>
-        <select id="map-size" class="form-control" style="width:200px; padding:4px 8px;"></select>
-      </div>
-      <div id="csv-preview-text" style="font-size:0.85rem; color:#10b981; margin-top:8px; font-weight:500;"></div>
-    </div>
+  document.getElementById('qr-modal-title').textContent = `【${groupName}】专属核验入口`;
+  document.getElementById('qr-url-input').value = targetUrl;
+  
+  // 渲染二维码
+  const box = document.getElementById('qr-canvas-box');
+  box.innerHTML = '';
+  
+  try {
+    new QRCode(box, {
+      text: targetUrl,
+      width: 200,
+      height: 200,
+      colorDark: "#0f172a",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch (err) {
+    box.innerHTML = '<span style="color:#ef4444;font-size:12px;">二维码生成失败，请直接复制下方链接</span>';
+  }
 
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeCsvModal()">取消</button>
-      <button id="btn-do-import" class="btn btn-success" style="display:none;" onclick="confirmCsvImport()">确认导入并保存</button>
-    </div>
-  </div>
-</div>
+  document.getElementById('qr-modal').classList.add('active');
+}
+
+function closeQrModal() {
+  document.getElementById('qr-modal').classList.remove('active');
+}
+
+function copyQrUrl() {
+  const input = document.getElementById('qr-url-input');
+  input.select();
+  input.setSelectionRange(0, 99999);
+  
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(input.value).then(() => {
+      alert('专属链接已复制到剪贴板！可直接粘贴发送到各岗位微信群。');
+    });
+  } else {
+    document.execCommand('copy');
+    alert('专属链接已复制到剪贴板！可直接粘贴发送到各岗位微信群。');
+  }
+}
+
+// ===== 傻瓜式 iOS 指引模态框 =====
+function openIosGuideModal() {
+  document.getElementById('ios-modal').classList.add('active');
+}
+
+function closeIosGuideModal() {
+  document.getElementById('ios-modal').classList.remove('active');
+}
+</script>
 
 </body>
 </html>
