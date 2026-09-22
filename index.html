@@ -1,15 +1,17 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#2563eb">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="名单核验">
-  <title>赛事志愿者物资与名单核验工具</title>
+  <meta name="apple-mobile-web-app-title" content="RosterCheck">
+  <link rel="manifest" href="manifest.json">
+  <title>Event Volunteer & Supply Verification Tool</title>
   <script id="preloaded-data-script">
     window.__PRELOADED_ROSTER__ = null;
     window.__DEFAULT_GROUP__ = null;
@@ -19,46 +21,61 @@
     body { background: #f1f5f9; padding: 14px; color: #1e293b; -webkit-tap-highlight-color: transparent; }
     .container { max-width: 560px; margin: 0 auto; }
     
-    /* 顶部标题区 */
+    /* Top Header */
     .header { text-align: center; margin-bottom: 12px; position: relative; }
+    .header-top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .lang-switch { font-size: 12px; color: #2563eb; text-decoration: none; font-weight: 600; padding: 3px 8px; border: 1px solid #bfdbfe; border-radius: 6px; background: #eff6ff; }
+    .btn-reset-danger { font-size: 11px; color: #dc2626; border: 1px solid #fca5a5; background: #fff; padding: 3px 8px; border-radius: 6px; cursor: pointer; }
     .header h1 { font-size: 20px; color: #0f172a; margin-bottom: 3px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .header p { font-size: 13px; color: #64748b; }
     .header-help-btn { display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; font-size: 12px; color: #2563eb; background: #eff6ff; padding: 4px 10px; border-radius: 20px; border: 1px solid #bfdbfe; cursor: pointer; text-decoration: none; }
     
-    /* 岗位隔离提示横幅 */
+    /* Station Isolation Banner */
     .group-banner { display: none; background: #ecfdf5; border: 1.5px solid #a7f3d0; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; align-items: center; justify-content: space-between; }
     .group-banner.active { display: flex; }
     .group-banner-info { font-size: 13px; color: #065f46; font-weight: 600; display: flex; align-items: center; gap: 6px; }
     .group-banner-badge { background: #059669; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 12px; }
     .group-banner-btn { background: #fff; border: 1px solid #a7f3d0; color: #047857; font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer; }
     
-    /* 搜索框与吸顶 */
+    /* Sticky Search Bar */
     .search-sticky { position: sticky; top: 6px; z-index: 99; background: #f8fafc; padding-bottom: 8px; }
-    .search-box { display: flex; gap: 8px; margin-bottom: 10px; }
-    input { flex: 1; padding: 12px 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 16px; outline: none; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.04); -webkit-appearance: none; }
-    input:focus { border-color: #2563eb; }
+    .search-box { display: flex; gap: 8px; margin-bottom: 8px; position: relative; }
+    .input-wrapper { position: relative; flex: 1; display: flex; align-items: center; }
+    input[type="text"] { width: 100%; padding: 12px 36px 12px 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 16px; outline: none; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.04); -webkit-appearance: none; }
+    input[type="text"]:focus { border-color: #2563eb; }
+    .btn-clear-kw { position: absolute; right: 10px; width: 22px; height: 22px; border-radius: 50%; background: #cbd5e1; color: #fff; border: none; font-size: 12px; font-weight: bold; cursor: pointer; display: none; align-items: center; justify-content: center; line-height: 1; }
+    .btn-clear-kw.show { display: flex; }
     .btn-search { padding: 0 16px; background: #2563eb; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
     
-    /* 大按钮操作栏 */
-    .action-toolbar { display: flex; gap: 8px; margin-bottom: 12px; width: 100%; }
+    /* Responsive Actions Toolbar */
+    .action-toolbar { display: flex; gap: 8px; margin-bottom: 8px; width: 100%; }
     .btn-action { flex: 1; padding: 11px 6px; border: none; border-radius: 10px; font-size: 13.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.06); }
     .btn-action:active { opacity: 0.85; transform: scale(0.98); }
     .btn-add { background: #10b981; color: #fff; }
     .btn-csv { background: #0284c7; color: #fff; }
     .btn-distribute { background: #8b5cf6; color: #fff; }
     
-    /* 状态与统计 */
+    /* Size Facet Filter Bar */
+    .size-facet-bar { display: flex; align-items: center; gap: 5px; overflow-x: auto; padding: 4px 0 6px 0; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .size-facet-bar::-webkit-scrollbar { display: none; }
+    .size-chip { flex-shrink: 0; padding: 4px 9px; font-size: 12px; font-weight: 600; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s ease; }
+    .size-chip:hover { border-color: #94a3b8; }
+    .size-chip.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .size-chip .badge-count { font-size: 10.5px; background: rgba(0,0,0,0.08); padding: 1px 5px; border-radius: 10px; }
+    .size-chip.active .badge-count { background: rgba(255,255,255,0.25); color: #fff; }
+
+    /* Section Bars */
     .section-bar { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 6px 0; font-size: 13px; color: #64748b; }
     .tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
     .tag { background: #e2e8f0; color: #334155; padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; }
     .tag-active { background: #dbeafe; color: #1d4ed8; font-weight: 600; }
     
-    /* 暂存区 */
+    /* Staged Items Area */
     .staged-box { background: #eff6ff; border: 1px dashed #bfdbfe; border-radius: 10px; padding: 10px; margin-bottom: 12px; }
     .staged-item { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #bfdbfe; padding: 4px 8px; border-radius: 6px; font-size: 13px; margin: 3px 2px; }
     .del-btn { color: #ef4444; font-weight: bold; cursor: pointer; padding-left: 4px; }
     
-    /* 结果卡片 */
+    /* Result Cards */
     .card { background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border-left: 4px solid #2563eb; }
     .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f1f5f9; }
     .name-box { display: flex; align-items: baseline; gap: 8px; }
@@ -75,7 +92,7 @@
     .clear-link { color: #94a3b8; font-size: 12px; text-decoration: none; cursor: pointer; }
     .empty { text-align: center; color: #94a3b8; margin-top: 30px; font-size: 14px; }
     
-    /* 弹窗通用样式 */
+    /* Modals */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 14px; }
     .modal-overlay.active { display: flex; }
     .modal-card { background: #fff; width: 100%; max-width: 450px; max-height: 90vh; overflow-y: auto; border-radius: 14px; padding: 18px; box-shadow: 0 12px 30px rgba(0,0,0,0.2); animation: popIn 0.2s ease-out; }
@@ -95,7 +112,7 @@
     .btn-primary { background: #2563eb; }
     .btn-purple { background: #8b5cf6; }
     
-    /* 分发中心卡片与二维码 */
+    /* Distribution Center */
     .dist-group-card { background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
     .dist-group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .dist-group-title { font-weight: 700; font-size: 14px; color: #1e293b; }
@@ -104,11 +121,11 @@
     .btn-mini { padding: 6px 10px; font-size: 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 4px; }
     .btn-mini-primary { background: #2563eb; color: #fff; border-color: #2563eb; }
     
-    /* 二维码展示弹窗 */
+    /* QR code modal */
     #qr-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; background: #fff; border-radius: 12px; }
     #qr-canvas-box { padding: 10px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; display: inline-block; }
     
-    /* iOS 指引折叠卡片 */
+    /* Mobile / iOS guide steps */
     .guide-step { display: flex; gap: 10px; margin-bottom: 12px; align-items: flex-start; }
     .guide-num { background: #2563eb; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
     .guide-text { font-size: 13px; color: #334155; line-height: 1.4; }
@@ -119,215 +136,229 @@
 
 <div class="container">
   <div class="header">
-    <h1>📋 赛事志愿者物资与名单核验</h1>
-    <p>单机安全运行 · 离线可用 · 现场隐私不泄露</p>
-    <a href="javascript:void(0)" class="header-help-btn" onclick="openIosGuideModal()">📱 志愿者使用说明 / 存到手机桌面</a>
+    <div class="header-top-nav">
+      <a href="index_zh.html" class="lang-switch">🇨🇳 切换至中文版</a>
+      <button class="btn-reset-danger" onclick="resetLocalData()" title="Purge local storage after event">🗑️ Clear Local Data</button>
+    </div>
+    <h1>📋 Event Volunteer & Supply Check</h1>
+    <p>100% Client-Side · Works Offline · Zero Data Leakage</p>
+    <a href="javascript:void(0)" class="header-help-btn" onclick="openIosGuideModal()">📱 Volunteer Instructions / Install to Home Screen</a>
   </div>
 
-  <!-- 岗位隔离提示横幅 (若 URL 中带有 group 参数或选择了组别) -->
+  <!-- Station Isolation Banner -->
   <div id="group-banner" class="group-banner">
     <div class="group-banner-info">
-      <span>🎯 当前岗位：</span>
-      <span id="group-banner-name" class="group-banner-badge">全部名单</span>
-      <span id="group-banner-count" style="font-size: 12px; color: #047857;">(0 人)</span>
+      <span>🎯 Station:</span>
+      <span id="group-banner-name" class="group-banner-badge">All Roster</span>
+      <span id="group-banner-count" style="font-size: 12px; color: #047857;">(0 people)</span>
     </div>
-    <button class="group-banner-btn" onclick="switchAllGroups()">查看全部</button>
+    <button class="group-banner-btn" onclick="switchAllGroups()">View All</button>
   </div>
 
   <div class="search-sticky">
     <div class="search-box">
-      <input type="text" id="kw" placeholder="输入姓名 / 编号 / 手机或身份证后4位" oninput="search()" onfocus="this.select()">
-      <button class="btn-search" onclick="search()">查询</button>
+      <div class="input-wrapper">
+        <input type="text" id="kw" placeholder="Search by name, bib, or last 4 digits of phone/ID" oninput="onKwInput()" onfocus="this.select()">
+        <button id="btn-clear-kw" class="btn-clear-kw" onclick="clearKeyword()" title="Clear keyword">&times;</button>
+      </div>
+      <button class="btn-search" onclick="search()">Search</button>
     </div>
 
-    <!-- 响应式三按钮工具栏 -->
+    <!-- Action Toolbar -->
     <div class="action-toolbar">
-      <button class="btn-action btn-add" onclick="openAddModal()">➕ 单条录入</button>
-      <button class="btn-action btn-csv" onclick="openCsvModal()">📁 批量导入</button>
-      <button class="btn-action btn-distribute" onclick="openDistributeModal()">🔗 岗位分发</button>
+      <button class="btn-action btn-add" onclick="openAddModal()">➕ Add Entry</button>
+      <button class="btn-action btn-csv" onclick="openCsvModal()">📁 Import CSV</button>
+      <button class="btn-action btn-distribute" onclick="openDistributeModal()">🔗 Distribute</button>
+    </div>
+
+    <!-- Size Facet Filter Bar -->
+    <div class="size-facet-bar" id="size-facet-bar">
+      <!-- Injected dynamically -->
     </div>
   </div>
 
   <div class="section-bar">
-    <span>已暂存待领 (<span id="stage-count">0</span>)</span>
-    <a class="clear-link" onclick="clearStaged()">清空暂存</a>
+    <span>Staged Queue (<span id="stage-count">0</span>)</span>
+    <a class="clear-link" onclick="clearStaged()">Clear Staged</a>
   </div>
   <div class="staged-box" id="staged-container">
-    <span style="font-size:12px; color:#94a3b8;">暂无暂存。在查询结果卡片上点击“暂存”即可加入批量核对。</span>
+    <span style="font-size:12px; color:#94a3b8;">No items staged. Click "Stage" on cards to batch verify.</span>
   </div>
 
   <div class="section-bar">
-    <span>最近核验历史 (<span id="history-count">0</span>)</span>
-    <a class="clear-link" onclick="clearHistory()">清空历史</a>
+    <span>Recent History (<span id="history-count">0</span>)</span>
+    <a class="clear-link" onclick="clearHistory()">Clear History</a>
   </div>
   <div class="tags-wrap" id="history-tags">
-    <span style="font-size:12px; color:#94a3b8;">暂无最近核验记录</span>
+    <span style="font-size:12px; color:#94a3b8;">No recent verification history</span>
   </div>
 
   <div class="section-bar">
-    <span>核验结果列表 (<span id="result-count">0</span>)</span>
-    <span style="font-size:11px; color:#94a3b8;">支持拼音/首字母检索</span>
+    <span>Verification Results (<span id="result-count">0</span>)</span>
+    <span style="font-size:11px; color:#94a3b8;">Local In-Memory Search</span>
   </div>
   <div id="result-list"></div>
 </div>
 
-<!-- 单条录入模态框 -->
+<!-- Add Modal -->
 <div id="add-modal" class="modal-overlay">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title">➕ 新增名单记录</span>
+      <span class="modal-title">➕ Add Volunteer / Participant</span>
       <button class="close-modal" onclick="closeAddModal()">&times;</button>
     </div>
     <div class="form-group">
-      <label class="form-label">志愿者/选手姓名 *</label>
-      <input type="text" id="new-name" class="form-input" placeholder="例如：张三">
+      <label class="form-label">Full Name *</label>
+      <input type="text" id="new-name" class="form-input" placeholder="e.g., Alex Smith">
     </div>
     <div class="form-group">
-      <label class="form-label">编号 / 号码布 *</label>
-      <input type="text" id="new-bib" class="form-input" placeholder="例如：A1001 或 V-08">
+      <label class="form-label">Bib / ID Number *</label>
+      <input type="text" id="new-bib" class="form-input" placeholder="e.g., A1001 or V-08">
     </div>
     <div class="form-group">
-      <label class="form-label">所属岗位 / 组别 (可选)</label>
-      <input type="text" id="new-group" class="form-input" placeholder="例如：检录组、物资组、起跑区">
+      <label class="form-label">Station / Group (Optional)</label>
+      <input type="text" id="new-group" class="form-input" placeholder="e.g., Water Station 1, Gear Check">
     </div>
     <div class="form-group">
-      <label class="form-label">手机号码</label>
-      <input type="tel" id="new-phone" class="form-input" placeholder="例如：13800000000">
+      <label class="form-label">Phone Number</label>
+      <input type="tel" id="new-phone" class="form-input" placeholder="e.g., +1234567890">
     </div>
     <div class="form-group">
-      <label class="form-label">身份证号 / 证件号</label>
-      <input type="text" id="new-id" class="form-input" placeholder="用于后4位核对">
+      <label class="form-label">Government ID / Passport</label>
+      <input type="text" id="new-id" class="form-input" placeholder="For 4-digit verification">
     </div>
     <div class="form-group">
-      <label class="form-label">物资/服装尺码</label>
-      <input type="text" id="new-size" class="form-input" placeholder="例如：L、XL、大号">
+      <label class="form-label">Clothing / Gear Size</label>
+      <input type="text" id="new-size" class="form-input" placeholder="e.g., M, L, XL, Backpack">
     </div>
-    <button class="btn-submit" onclick="saveNewRecord()">保存并载入列表</button>
+    <button class="btn-submit" onclick="saveNewRecord()">Save & Store Locally</button>
   </div>
 </div>
 
-<!-- 批量导入 CSV 模态框 -->
+<!-- Import CSV Modal -->
 <div id="csv-modal" class="modal-overlay">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title">📁 批量导入名单 (CSV)</span>
+      <span class="modal-title">📁 Import Roster Spreadsheet (.csv)</span>
       <button class="close-modal" onclick="closeCsvModal()">&times;</button>
     </div>
     <div style="font-size:12px; color:#64748b; margin-bottom:12px; line-height:1.4;">
-      💡 请选择 Excel 导出的 <strong>.csv</strong> 格式表格。数据完全在本地解析，不上传任何服务器，请放心使用。
+      Supports standard <strong>.csv</strong> files exported from Excel or Google Sheets.<br>
+      <span style="color:#10b981; font-weight:600;">🔒 100% Client-Side:</span> The file is parsed in browser memory and stored directly into your device's LocalStorage.
     </div>
     <div class="form-group">
+      <label class="form-label">Choose CSV File</label>
       <input type="file" id="csv-file-input" accept=".csv,text/csv" class="form-input" onchange="handleCsvFile(event)">
     </div>
-    <div id="csv-mapping-area" style="display:none; margin-top:14px; border-top:1px dashed #e2e8f0; padding-top:12px;">
-      <div style="font-size:13px; font-weight:700; color:#1e293b; margin-bottom:8px;">请确认表格列对应关系：</div>
+    <div id="csv-mapping-area" style="display: none; margin-top: 14px;">
+      <div style="font-weight: 700; font-size: 13px; color: #1e293b; margin-bottom: 8px;">Map Spreadsheet Columns:</div>
       <div class="form-group">
-        <label class="form-label">姓名列 *</label>
+        <label class="form-label">Name Column *</label>
         <select id="map-name" class="form-select"></select>
       </div>
       <div class="form-group">
-        <label class="form-label">编号 / 号码布列 *</label>
+        <label class="form-label">Bib / ID Column *</label>
         <select id="map-bib" class="form-select"></select>
       </div>
       <div class="form-group">
-        <label class="form-label">所属组别 / 岗位列 (可选)</label>
+        <label class="form-label">Station / Group Column</label>
         <select id="map-group" class="form-select"></select>
       </div>
       <div class="form-group">
-        <label class="form-label">手机号码列 (可选)</label>
+        <label class="form-label">Phone Column</label>
         <select id="map-phone" class="form-select"></select>
       </div>
       <div class="form-group">
-        <label class="form-label">身份证/证件号列 (可选)</label>
+        <label class="form-label">Gov ID Column</label>
         <select id="map-id" class="form-select"></select>
       </div>
       <div class="form-group">
-        <label class="form-label">物资/衣服尺码列 (可选)</label>
+        <label class="form-label">Size / Gear Column</label>
         <select id="map-size" class="form-select"></select>
       </div>
-      <button class="btn-submit" onclick="confirmCsvImport()">确认并批量导入</button>
+      <button class="btn-submit btn-primary" onclick="confirmCsvImport()">Confirm & Save to Device</button>
     </div>
   </div>
 </div>
 
-<!-- 岗位分发中心模态框 -->
+<!-- Distribution Center Modal -->
 <div id="dist-modal" class="modal-overlay">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title">🔗 岗位数据隔离分发中心</span>
+      <span class="modal-title">🔗 Station Data Distribution Center</span>
       <button class="close-modal" onclick="closeDistributeModal()">&times;</button>
     </div>
     <div style="font-size:12px; color:#64748b; margin-bottom:12px; line-height:1.4;">
-      管理员可按组别生成专属链接或二维码发给各岗位志愿者。各组志愿者打开后<strong>仅能查看并核对本组数据</strong>，互不干扰！
+      Generate custom station QR codes or standalone offline files. Volunteers will <strong>only access data for their assigned station</strong> with zero mutual interference!
     </div>
     <div id="dist-groups-container"></div>
   </div>
 </div>
 
-<!-- 二维码与链接展示弹窗 -->
+<!-- QR Display Modal -->
 <div id="qr-modal" class="modal-overlay">
   <div class="modal-card" style="text-align: center;">
     <div class="modal-header">
-      <span class="modal-title" id="qr-modal-title">岗位专属二维码</span>
+      <span class="modal-title" id="qr-modal-title">Station QR Code</span>
       <button class="close-modal" onclick="closeQrModal()">&times;</button>
     </div>
     <div id="qr-container">
       <div id="qr-canvas-box"></div>
-      <p style="font-size: 13px; color: #475569; margin-top: 10px; font-weight: 600;" id="qr-tip-text">志愿者手机微信或相机扫一扫即可直接核验</p>
+      <p style="font-size: 13px; color: #475569; margin-top: 10px; font-weight: 600;" id="qr-tip-text">Scan with phone camera to load roster directly into local storage</p>
       <input type="text" id="qr-url-input" class="form-input" readonly style="margin-top: 10px; font-size: 12px; color: #64748b;" onclick="this.select()">
-      <button class="btn-submit btn-primary" style="margin-top: 8px;" onclick="copyQrUrl()">📋 复制专属链接发微信群</button>
+      <button class="btn-submit btn-primary" style="margin-top: 8px;" onclick="copyQrUrl()">📋 Copy Link</button>
     </div>
   </div>
 </div>
 
-<!-- 傻瓜式指引 / iOS 桌面保存说明模态框 -->
+<!-- Volunteer Mobile Guide Modal -->
 <div id="ios-modal" class="modal-overlay">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title">📱 志愿者傻瓜式使用指南</span>
+      <span class="modal-title">📱 Volunteer Mobile Quick Guide</span>
       <button class="close-modal" onclick="closeIosGuideModal()">&times;</button>
     </div>
     <div style="margin-bottom: 14px;">
       <div class="guide-step">
         <div class="guide-num">1</div>
         <div class="guide-text">
-          <strong>打开即可查询：</strong>无需注册账号，无需下载 App，在上方输入姓名或手机后4位即可秒查物资和编号。
+          <strong>Instant Verification:</strong> No account signup or app download required. Search by name, bib number, or last 4 digits of phone/ID.
         </div>
       </div>
       <div class="guide-step">
         <div class="guide-num">2</div>
         <div class="guide-text">
-          <strong>断网离线可用：</strong>页面打开后会自动离线缓存，现场地下室或大山里没有网络信号照样能顺畅核对。
+          <strong>100% Offline Capability:</strong> Cached automatically in your browser (PWA). Functions seamlessly even in remote areas or basements with zero cellular reception.
         </div>
       </div>
       <div class="guide-step">
         <div class="guide-num">3</div>
         <div class="guide-text">
-          <strong>iOS / 苹果手机存到桌面（变成 App）：</strong><br>
-          ① 用 Safari 浏览器打开当前页面；<br>
-          ② 点击底部正中间的 <strong>分享图标</strong>（带有向上箭头的方块）；<br>
-          ③ 向上滑动菜单，点击 <strong>「添加到主屏幕」</strong>；<br>
-          ④ 点击右上角「添加」，手机桌面上就会生成一个像原生 App 一样的独立图标，全屏纯净操作！
+          <strong>Add to iPhone Home Screen:</strong><br>
+          ① Open this link in <strong>Safari</strong>.<br>
+          ② Tap the <strong>Share button</strong> (box with arrow up) at bottom center.<br>
+          ③ Scroll down and select <strong>"Add to Home Screen"</strong>.<br>
+          ④ Tap "Add". The tool will launch like a standalone native app!
         </div>
       </div>
       <div class="guide-step">
         <div class="guide-num">4</div>
         <div class="guide-text">
-          <strong>安卓手机存到桌面：</strong><br>
-          在 Chrome 或自带浏览器中点击右上角三个点，选择 <strong>「添加到主屏幕」</strong> 或 <strong>「添加至桌面」</strong> 即可。
+          <strong>Add to Android Home Screen:</strong><br>
+          Tap the 3 dots in Chrome and select <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.
         </div>
       </div>
     </div>
-    <button class="btn-submit btn-primary" onclick="closeIosGuideModal()">我明白了</button>
+    <button class="btn-submit btn-primary" onclick="closeIosGuideModal()">Got It</button>
   </div>
 </div>
 
 <div style="text-align:center; padding: 20px 12px 30px; font-size:0.8rem; color:#64748b; line-height: 1.6;">
-  <span>🎗️ 欢迎各类赛事、公益与志愿服务免费使用 · 纯单机离线零泄露</span><br>
-  <span style="font-size:0.72rem; color:#94a3b8;">如蒙受惠，若能惠赐一份志愿服务荣誉证书留念，不胜荣幸</span>
+  <span>🎗️ Free for all sports events, non-profits, and volunteer organizations · 100% Local Privacy</span><br>
+  <span style="font-size:0.72rem; color:#94a3b8;">If this tool assists your operations, a volunteer certificate of honor is sincerely appreciated.</span>
 </div>
 
-<!-- 嵌入核心离线压缩与二维码库 -->
+<!-- Embedded Core Compression & QR Code Libraries -->
 <script>
 var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$",e={};function t(r,o){if(!e[r]){e[r]={};for(var n=0;n<r.length;n++)e[r][r.charAt(n)]=n}return e[r][o]}var i={compressToBase64:function(r){if(null==r)return"";var n=i._compress(r,6,function(r){return o.charAt(r)});switch(n.length%4){default:case 0:return n;case 1:return n+"===";case 2:return n+"==";case 3:return n+"="}},decompressFromBase64:function(r){return null==r?"":""==r?null:i._decompress(r.length,32,function(n){return t(o,r.charAt(n))})},compressToUTF16:function(o){return null==o?"":i._compress(o,15,function(o){return r(o+32)})+" "},decompressFromUTF16:function(r){return null==r?"":""==r?null:i._decompress(r.length,16384,function(o){return r.charCodeAt(o)-32})},compressToUint8Array:function(r){for(var o=i.compress(r),n=new Uint8Array(2*o.length),e=0,t=o.length;e<t;e++){var s=o.charCodeAt(e);n[2*e]=s>>>8,n[2*e+1]=s%256}return n},decompressFromUint8Array:function(o){if(null==o)return i.decompress(o);for(var n=new Array(o.length/2),e=0,t=n.length;e<t;e++)n[e]=256*o[2*e]+o[2*e+1];var s=[];return n.forEach(function(o){s.push(r(o))}),i.decompress(s.join(""))},compressToEncodedURIComponent:function(r){return null==r?"":i._compress(r,6,function(r){return n.charAt(r)})},decompressFromEncodedURIComponent:function(r){return null==r?"":""==r?null:(r=r.replace(/ /g,"+"),i._decompress(r.length,32,function(o){return t(n,r.charAt(o))}))},compress:function(o){return i._compress(o,16,function(o){return r(o)})},_compress:function(r,o,n){if(null==r)return"";var e,t,i,s={},u={},a="",p="",c="",l=2,f=3,h=2,d=[],m=0,v=0;for(i=0;i<r.length;i+=1)if(a=r.charAt(i),Object.prototype.hasOwnProperty.call(s,a)||(s[a]=f++,u[a]=!0),p=c+a,Object.prototype.hasOwnProperty.call(s,p))c=p;else{if(Object.prototype.hasOwnProperty.call(u,c)){if(c.charCodeAt(0)<256){for(e=0;e<h;e++)m<<=1,v==o-1?(v=0,d.push(n(m)),m=0):v++;for(t=c.charCodeAt(0),e=0;e<8;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}else{for(t=1,e=0;e<h;e++)m=m<<1|t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t=0;for(t=c.charCodeAt(0),e=0;e<16;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}0==--l&&(l=Math.pow(2,h),h++),delete u[c]}else for(t=s[c],e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;0==--l&&(l=Math.pow(2,h),h++),s[p]=f++,c=String(a)}if(""!==c){if(Object.prototype.hasOwnProperty.call(u,c)){if(c.charCodeAt(0)<256){for(e=0;e<h;e++)m<<=1,v==o-1?(v=0,d.push(n(m)),m=0):v++;for(t=c.charCodeAt(0),e=0;e<8;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}else{for(t=1,e=0;e<h;e++)m=m<<1|t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t=0;for(t=c.charCodeAt(0),e=0;e<16;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}0==--l&&(l=Math.pow(2,h),h++),delete u[c]}else for(t=s[c],e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;0==--l&&(l=Math.pow(2,h),h++)}for(t=2,e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;for(;;){if(m<<=1,v==o-1){d.push(n(m));break}v++}return d.join("")},decompress:function(r){return null==r?"":""==r?null:i._decompress(r.length,32768,function(o){return r.charCodeAt(o)})},_decompress:function(o,n,e){var t,i,s,u,a,p,c,l=[],f=4,h=4,d=3,m="",v=[],g={val:e(0),position:n,index:1};for(t=0;t<3;t+=1)l[t]=t;for(s=0,a=Math.pow(2,2),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;switch(s){case 0:for(s=0,a=Math.pow(2,8),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;c=r(s);break;case 1:for(s=0,a=Math.pow(2,16),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;c=r(s);break;case 2:return""}for(l[3]=c,i=c,v.push(c);;){if(g.index>o)return"";for(s=0,a=Math.pow(2,d),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;switch(c=s){case 0:for(s=0,a=Math.pow(2,8),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;l[h++]=r(s),c=h-1,f--;break;case 1:for(s=0,a=Math.pow(2,16),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;l[h++]=r(s),c=h-1,f--;break;case 2:return v.join("")}if(0==f&&(f=Math.pow(2,d),d++),l[c])m=l[c];else{if(c!==h)return null;m=i+i.charAt(0)}v.push(m),l[h++]=i+m.charAt(0),i=m,0==--f&&(f=Math.pow(2,d),d++)}}};return i}();"function"==typeof define&&define.amd?define(function(){return LZString}):"undefined"!=typeof module&&null!=module?module.exports=LZString:"undefined"!=typeof angular&&null!=angular&&angular.module("LZString",[]).factory("LZString",function(){return LZString});
 </script>
@@ -336,9 +367,10 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
 </script>
 
 <script>
-// ===== 全局核心数据结构 =====
+// ===== Global Core Data Structures =====
 let roster = [];
-let activeGroup = null; // 当前限定查看的组别 (null 为全部)
+let activeGroup = null; // Filter by station (null for all)
+let activeSize = null;  // Filter by size (null for all)
 let staged = [];
 let history = [];
 let qrcodeInstance = null;
@@ -347,26 +379,35 @@ const CUSTOM_DATA_KEY = 'event_roster_custom_data_v2';
 const STAGED_KEY = 'event_roster_staged_v2';
 const HISTORY_KEY = 'event_roster_history_v2';
 
-// ===== 初始化 =====
+// Register Service Worker (PWA Full Offline Support)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => {
+      console.log('SW register hint:', err);
+    });
+  });
+}
 
-// 方案一：一键烘焙并导出带数据的单文件 HTML
+// Export Self-Contained Standalone HTML (Zero modal pollution)
 function exportStandaloneHtml(groupEncoded, groupName) {
   let targetData = roster;
   let targetGroup = null;
   if (groupEncoded) {
     targetGroup = decodeURIComponent(groupEncoded);
-    targetData = roster.filter(x => (x.group || '未分组') === targetGroup);
+    targetData = roster.filter(x => (x.group || 'Unassigned') === targetGroup);
   }
 
   if (!targetData || targetData.length === 0) {
-    alert('当前没有可导出的名单数据！');
+    alert('No roster data available to export!');
     return;
   }
 
-  // 获取当前网页完整 DOM
-  let html = document.documentElement.outerHTML;
+  // Clone document and remove active modals so exported file opens cleanly
+  const clone = document.documentElement.cloneNode(true);
+  clone.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('active'));
+  
+  let html = clone.outerHTML;
 
-  // 构造内嵌数据的替换脚本
   const scriptRegex = /<script id="preloaded-data-script">[\s\S]*?<\/script>/;
   const newScript = `<script id="preloaded-data-script">
     window.__PRELOADED_ROSTER__ = ${JSON.stringify(targetData)};
@@ -387,8 +428,8 @@ function exportStandaloneHtml(groupEncoded, groupName) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  const safeName = (targetGroup || '全量名单').replace(/[\/:*?"<>|]/g, '_');
-  a.download = `赛事核验_${safeName}.html`;
+  const safeName = (targetGroup || 'Full_Roster').replace(/[\/:*?"<>|]/g, '_');
+  a.download = `RosterCheck_${safeName}.html`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -411,25 +452,25 @@ window.addEventListener('DOMContentLoaded', () => {
     renderStaged();
     renderHistory();
     renderGroupBanner();
+    renderSizeFacetBar();
     search();
   } else {
     loadStoredData();
     handleUrlParams();
+    renderSizeFacetBar();
     search();
   }
 });
 
-// 处理 URL 中的岗位过滤或压缩数据包
+// Handle URL parameters or decompress QR scan payload
 function handleUrlParams() {
   const params = new URLSearchParams(window.location.search);
   
-  // 1. 是否带有组别限定 (group)
   const groupParam = params.get('group');
   if (groupParam) {
     activeGroup = decodeURIComponent(groupParam);
   }
 
-  // 2. 是否携带了压缩的打包数据 (pkg)
   const pkgData = params.get('pkg');
   if (pkgData) {
     try {
@@ -437,19 +478,17 @@ function handleUrlParams() {
       if (jsonStr) {
         const importedData = JSON.parse(jsonStr);
         if (Array.isArray(importedData) && importedData.length > 0) {
-          // 直接作为当前运行数据，并保存到本地
+          // Direct local storage persistence (100% Client-Side)
           roster = importedData;
           localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(importedData));
-          populateGroupSelects();
           renderGroupBanner();
-          renderStats();
+          renderSizeFacetBar();
           search();
-          console.log('成功通过扫码载入数据:', importedData.length);
           return;
         }
       }
     } catch (e) {
-      console.warn('URL 数据包解析失败:', e);
+      console.warn('URL package parsing exception:', e);
     }
   }
 
@@ -458,7 +497,7 @@ function handleUrlParams() {
   }
 }
 
-// 渲染顶部组别横幅
+// Station banner
 function renderGroupBanner() {
   const banner = document.getElementById('group-banner');
   const nameElem = document.getElementById('group-banner-name');
@@ -467,8 +506,8 @@ function renderGroupBanner() {
   if (activeGroup) {
     banner.classList.add('active');
     nameElem.textContent = activeGroup;
-    const filteredCount = roster.filter(x => (x.group || '未分组') === activeGroup).length;
-    countElem.textContent = `(${filteredCount} 人)`;
+    const filteredCount = roster.filter(x => (x.group || 'Unassigned') === activeGroup).length;
+    countElem.textContent = `(${filteredCount} people)`;
   } else {
     banner.classList.remove('active');
   }
@@ -477,32 +516,137 @@ function renderGroupBanner() {
 function switchAllGroups() {
   activeGroup = null;
   renderGroupBanner();
+  renderSizeFacetBar();
   search();
 }
 
-// 加载本地数据
+// Load local storage data
 function loadStoredData() {
-  const localCustom = JSON.parse(localStorage.getItem(CUSTOM_DATA_KEY) || '[]');
-  staged = JSON.parse(localStorage.getItem(STAGED_KEY) || '[]');
-  history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-  roster = localCustom;
+  try {
+    roster = JSON.parse(localStorage.getItem(CUSTOM_DATA_KEY) || '[]');
+    staged = JSON.parse(localStorage.getItem(STAGED_KEY) || '[]');
+    history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  } catch (e) {
+    roster = [];
+    staged = [];
+    history = [];
+  }
   renderStaged();
   renderHistory();
 }
 
-// 核心查询逻辑 (支持多字段、首字母拼音倒排、后四位匹配)
+// Purge all local data after event
+function resetLocalData() {
+  if (confirm('⚠️ Are you sure you want to permanently clear all local roster data and history?\n\nThis will remove all participant info from your device\'s local storage. This cannot be undone!')) {
+    localStorage.removeItem(CUSTOM_DATA_KEY);
+    localStorage.removeItem(STAGED_KEY);
+    localStorage.removeItem(HISTORY_KEY);
+    roster = [];
+    staged = [];
+    history = [];
+    activeGroup = null;
+    activeSize = null;
+    document.getElementById('kw').value = '';
+    onKwInput();
+    renderGroupBanner();
+    renderStaged();
+    renderHistory();
+    renderSizeFacetBar();
+    search();
+    alert('All cached event data on this device has been safely wiped!');
+  }
+}
+
+// Search input handling & clear button
+function onKwInput() {
+  const val = document.getElementById('kw').value;
+  const btnClear = document.getElementById('btn-clear-kw');
+  if (val.length > 0) {
+    btnClear.classList.add('show');
+  } else {
+    btnClear.classList.remove('show');
+  }
+  search();
+}
+
+function clearKeyword() {
+  const kwInput = document.getElementById('kw');
+  kwInput.value = '';
+  document.getElementById('btn-clear-kw').classList.remove('show');
+  kwInput.focus();
+  search();
+}
+
+// Render size facet chips
+function renderSizeFacetBar() {
+  const bar = document.getElementById('size-facet-bar');
+  if (!bar) return;
+
+  let pool = roster;
+  if (activeGroup) {
+    pool = pool.filter(x => (x.group || 'Unassigned') === activeGroup);
+  }
+
+  if (pool.length === 0) {
+    bar.innerHTML = '';
+    return;
+  }
+
+  const sizeMap = {};
+  pool.forEach(item => {
+    const s = (item.size || 'Standard').trim().toUpperCase();
+    sizeMap[s] = (sizeMap[s] || 0) + 1;
+  });
+
+  const knownOrder = ['S', 'M', 'L', 'XL', '2XL', '3XL'];
+  const allSizes = Object.keys(sizeMap).sort((a, b) => {
+    const idxA = knownOrder.indexOf(a);
+    const idxB = knownOrder.indexOf(b);
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+    if (idxA !== -1) return -1;
+    if (idxB !== -1) return 1;
+    return a.localeCompare(b);
+  });
+
+  let chipsHtml = `
+    <div class="size-chip ${activeSize === null ? 'active' : ''}" onclick="selectSize(null)">
+      All <span class="badge-count">${pool.length}</span>
+    </div>
+  `;
+
+  allSizes.forEach(s => {
+    const isAct = activeSize === s;
+    chipsHtml += `
+      <div class="size-chip ${isAct ? 'active' : ''}" onclick="selectSize('${s}')">
+        ${s} <span class="badge-count">${sizeMap[s]}</span>
+      </div>
+    `;
+  });
+
+  bar.innerHTML = chipsHtml;
+}
+
+function selectSize(size) {
+  activeSize = size;
+  renderSizeFacetBar();
+  search();
+}
+
+// Core search logic
 function search() {
   const kw = document.getElementById('kw').value.trim().toLowerCase();
   let pool = roster;
 
-  // 岗位隔离：若处于特定组别模式，只检索该组别
   if (activeGroup) {
-    pool = pool.filter(x => (x.group || '未分组') === activeGroup);
+    pool = pool.filter(x => (x.group || 'Unassigned') === activeGroup);
+  }
+
+  if (activeSize) {
+    pool = pool.filter(x => ((x.size || 'Standard').trim().toUpperCase()) === activeSize);
   }
 
   let matches = [];
   if (!kw) {
-    // 默认展示该范围下的前 60 条
     matches = pool.slice(0, 60);
   } else {
     matches = pool.filter(p => {
@@ -513,21 +657,22 @@ function search() {
       const id = (p.id || '');
       const matchId = id.toLowerCase().endsWith(kw) || id.toLowerCase().includes(kw);
       const matchGroup = (p.group || '').toLowerCase().includes(kw);
-      return matchName || matchBib || matchPhone || matchId || matchGroup;
+      const matchSize = (p.size || '').toLowerCase().includes(kw);
+      return matchName || matchBib || matchPhone || matchId || matchGroup || matchSize;
     });
   }
 
   renderResults(matches);
 }
 
-// 渲染结果卡片
+// Render cards
 function renderResults(list) {
   const container = document.getElementById('result-list');
   const countElem = document.getElementById('result-count');
   countElem.textContent = list.length;
 
   if (list.length === 0) {
-    container.innerHTML = `<div class="empty">未找到匹配名单记录<br><span style="font-size:12px; color:#cbd5e1;">可尝试输入姓名、编号、或手机号后4位</span></div>`;
+    container.innerHTML = `<div class="empty">No matching records found<br><span style="font-size:12px; color:#cbd5e1;">Try name, bib number, or last 4 digits of phone/ID</span></div>`;
     return;
   }
 
@@ -538,24 +683,24 @@ function renderResults(list) {
       <div class="card">
         <div class="card-top">
           <div class="name-box">
-            <span class="name">${p.name || '未命名'}</span>
+            <span class="name">${p.name || 'Anonymous'}</span>
             <span class="bib">${p.bib || ''}</span>
             ${groupBadge}
           </div>
-          <span class="badge">${p.size || '均码'}</span>
+          <span class="badge">${p.size || 'Standard'}</span>
         </div>
         <div class="info-row">
-          <span class="label">手机号码</span>
+          <span class="label">Phone</span>
           <span class="val">${p.phone || '-'}</span>
         </div>
         <div class="info-row">
-          <span class="label">证件号码</span>
+          <span class="label">ID / Passport</span>
           <span class="val">${p.id || '-'}</span>
         </div>
         <div class="action-bar">
-          <button class="clear-link" style="border:none;background:none;color:#ef4444;" onclick="deleteRecord('${p.bib}')">删除</button>
+          <button class="clear-link" style="border:none;background:none;color:#ef4444;" onclick="deleteRecord('${p.bib}')">Delete</button>
           <button class="btn-stage ${isStg ? 'btn-staged' : ''}" onclick="toggleStage('${p.bib}', '${p.name}')">
-            ${isStg ? '已暂存 (移出)' : '暂存待领'}
+            ${isStg ? 'Staged (Remove)' : 'Stage for Pickup'}
           </button>
         </div>
       </div>
@@ -563,7 +708,7 @@ function renderResults(list) {
   }).join('');
 }
 
-// ===== 暂存逻辑 =====
+// ===== Staged Queue Logic =====
 function toggleStage(bib, name) {
   const idx = staged.indexOf(bib);
   if (idx > -1) {
@@ -583,7 +728,7 @@ function renderStaged() {
   count.textContent = staged.length;
 
   if (staged.length === 0) {
-    box.innerHTML = `<span style="font-size:12px; color:#94a3b8;">暂无暂存。在查询结果卡片上点击“暂存”即可加入批量核对。</span>`;
+    box.innerHTML = `<span style="font-size:12px; color:#94a3b8;">No items staged. Click "Stage" on cards to batch verify.</span>`;
     return;
   }
 
@@ -607,7 +752,7 @@ function clearStaged() {
   search();
 }
 
-// ===== 历史记录逻辑 =====
+// ===== History Logic =====
 function addHistory(bib, name) {
   history = history.filter(x => x.bib !== bib);
   history.unshift({ bib, name });
@@ -622,7 +767,7 @@ function renderHistory() {
   count.textContent = history.length;
 
   if (history.length === 0) {
-    container.innerHTML = `<span style="font-size:12px; color:#94a3b8;">暂无最近核验记录</span>`;
+    container.innerHTML = `<span style="font-size:12px; color:#94a3b8;">No recent verification history</span>`;
     return;
   }
 
@@ -635,7 +780,7 @@ function renderHistory() {
 
 function quickSearch(val) {
   document.getElementById('kw').value = val;
-  search();
+  onKwInput();
 }
 
 function clearHistory() {
@@ -644,7 +789,7 @@ function clearHistory() {
   renderHistory();
 }
 
-// ===== 单条录入功能 =====
+// ===== Add Record Modal =====
 function openAddModal() {
   document.getElementById('add-modal').classList.add('active');
 }
@@ -662,7 +807,7 @@ function saveNewRecord() {
   const size = document.getElementById('new-size').value.trim();
 
   if (!name || !bib) {
-    alert('请填写志愿者/选手的【姓名】和【编号/号码布】！');
+    alert('Please provide at least Name and Bib/ID number!');
     return;
   }
 
@@ -670,7 +815,7 @@ function saveNewRecord() {
   const newRec = { name, bib, group, phone, id, size };
 
   if (existingIdx > -1) {
-    if (confirm(`编号 ${bib} 已存在，是否覆盖更新？`)) {
+    if (confirm(`Bib ${bib} already exists. Overwrite?`)) {
       roster[existingIdx] = newRec;
     } else {
       return;
@@ -688,22 +833,24 @@ function saveNewRecord() {
   document.getElementById('new-id').value = '';
   document.getElementById('new-size').value = '';
   
+  renderSizeFacetBar();
   search();
-  alert('录入成功！已存入本地名单库。');
+  alert('Record saved to local device!');
 }
 
 function deleteRecord(bib) {
-  if (confirm(`确定要删除编号为 ${bib} 的记录吗？`)) {
+  if (confirm(`Are you sure you want to delete record ${bib}?`)) {
     roster = roster.filter(x => x.bib !== bib);
     staged = staged.filter(x => x !== bib);
     localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(roster));
     localStorage.setItem(STAGED_KEY, JSON.stringify(staged));
     renderStaged();
+    renderSizeFacetBar();
     search();
   }
 }
 
-// ===== 批量导入 CSV 逻辑 =====
+// ===== Import CSV Logic =====
 let csvHeaders = [];
 let csvRows = [];
 
@@ -726,7 +873,7 @@ function handleCsvFile(e) {
     const text = evt.target.result;
     const parsed = parseCSV(text);
     if (!parsed || parsed.length < 2) {
-      alert('CSV 文件内容为空或格式有误！');
+      alert('CSV file is empty or invalid!');
       return;
     }
     csvHeaders = parsed[0].map(h => h.trim());
@@ -737,6 +884,9 @@ function handleCsvFile(e) {
 }
 
 function parseCSV(text) {
+  if (text.charCodeAt(0) === 0xFEFF) {
+    text = text.slice(1);
+  }
   const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
   return lines.map(line => {
     let result = [];
@@ -760,17 +910,17 @@ function parseCSV(text) {
 
 function setupMappingSelects() {
   const fields = [
-    { id: 'map-name', match: ['姓名', '名字', '志愿者', '选手'] },
-    { id: 'map-bib', match: ['号码', '编号', '号码布', 'bib', '序号'] },
-    { id: 'map-group', match: ['组别', '岗位', '分组', '小组', '部门', 'group'] },
-    { id: 'map-phone', match: ['电话', '手机', '联系方式', 'phone', 'tel'] },
-    { id: 'map-id', match: ['证件', '身份证', '证件号', 'id'] },
-    { id: 'map-size', match: ['尺码', '服装', '衣服', 'size', '物资'] }
+    { id: 'map-name', match: ['name', 'volunteer', 'runner', 'athlete', 'fullname'] },
+    { id: 'map-bib', match: ['bib', 'number', 'no', 'id', 'code'] },
+    { id: 'map-group', match: ['station', 'group', 'team', 'role', 'dept'] },
+    { id: 'map-phone', match: ['phone', 'tel', 'mobile', 'cell', 'contact'] },
+    { id: 'map-id', match: ['passport', 'gov', 'identity', 'ssn'] },
+    { id: 'map-size', match: ['size', 'gear', 'shirt', 't-shirt'] }
   ];
 
   fields.forEach(f => {
     const sel = document.getElementById(f.id);
-    sel.innerHTML = '<option value="-1">-- 不导入此项 --</option>';
+    sel.innerHTML = '<option value="-1">-- Do Not Import --</option>';
     let bestIdx = -1;
     csvHeaders.forEach((h, idx) => {
       const opt = document.createElement('option');
@@ -797,7 +947,7 @@ function confirmCsvImport() {
   const sizeIdx = parseInt(document.getElementById('map-size').value);
 
   if (nameIdx === -1 || bibIdx === -1) {
-    alert('【姓名】与【编号/号码布】为必选项，请选择对应的表格列！');
+    alert('Name and Bib columns are required!');
     return;
   }
 
@@ -824,25 +974,25 @@ function confirmCsvImport() {
 
   localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(roster));
   closeCsvModal();
+  renderSizeFacetBar();
   search();
-  alert(`成功批量导入 ${count} 条记录并保存到本地名单库！`);
+  alert(`Successfully imported ${count} entries into local device!`);
 }
 
-// ===== 岗位分发中心逻辑 =====
+// ===== Station Distribution Center =====
 function openDistributeModal() {
   const container = document.getElementById('dist-groups-container');
   
-  // 汇总当前所有组别
   const groupsMap = {};
   roster.forEach(item => {
-    const g = item.group || '未分组';
+    const g = item.group || 'Unassigned';
     if (!groupsMap[g]) groupsMap[g] = 0;
     groupsMap[g]++;
   });
 
   const groupKeys = Object.keys(groupsMap);
   if (groupKeys.length === 0) {
-    container.innerHTML = `<div style="text-align:center;color:#94a3b8;padding:20px;">当前还没有导入或录入名单数据。<br>请先点击【批量导入】或【单条录入】。</div>`;
+    container.innerHTML = `<div style="text-align:center;color:#94a3b8;padding:20px;">No records yet.<br>Please use "Import CSV" or "Add Entry" first.</div>`;
     document.getElementById('dist-modal').classList.add('active');
     return;
   }
@@ -850,23 +1000,23 @@ function openDistributeModal() {
   container.innerHTML = `
     <div class="dist-group-card" style="background:#eff6ff; border-color:#bfdbfe;">
       <div class="dist-group-header">
-        <span class="dist-group-title">🌟 全部完整名单 (管理员)</span>
-        <span class="dist-group-badge" style="background:#dbeafe; color:#1d4ed8;">共 ${roster.length} 人</span>
+        <span class="dist-group-title">🌟 Complete Master Roster (Admin)</span>
+        <span class="dist-group-badge" style="background:#dbeafe; color:#1d4ed8;">Total: ${roster.length}</span>
       </div>
       <div class="dist-actions" style="flex-wrap:wrap; gap:8px;">
-        <button class="btn-mini btn-mini-primary" onclick="generateDistribution('', '全部完整名单')">📱 二维码 / 链接</button>
-        <button class="btn-mini" style="background:#10b981; color:#fff; border-color:#10b981;" onclick="exportStandaloneHtml('', '全部完整名单')">📥 导出全量独立 HTML</button>
+        <button class="btn-mini btn-mini-primary" onclick="generateDistribution('', 'Complete Master Roster')">📱 QR / Link</button>
+        <button class="btn-mini" style="background:#10b981; color:#fff; border-color:#10b981;" onclick="exportStandaloneHtml('', 'Complete Master Roster')">📥 Export Standalone HTML</button>
       </div>
     </div>
   ` + groupKeys.map(g => `
     <div class="dist-group-card">
       <div class="dist-group-header">
         <span class="dist-group-title">🏷️ ${g}</span>
-        <span class="dist-group-badge">共 ${groupsMap[g]} 人</span>
+        <span class="dist-group-badge">Total: ${groupsMap[g]}</span>
       </div>
       <div class="dist-actions" style="flex-wrap:wrap; gap:8px;">
-        <button class="btn-mini btn-mini-primary" onclick="generateDistribution('${encodeURIComponent(g)}', '${g}')">📱 专属码 / 链接</button>
-        <button class="btn-mini" style="background:#059669; color:#fff; border-color:#059669;" onclick="exportStandaloneHtml('${encodeURIComponent(g)}', '${g}')">📥 导出本组离线 HTML</button>
+        <button class="btn-mini btn-mini-primary" onclick="generateDistribution('${encodeURIComponent(g)}', '${g}')">📱 QR / Link</button>
+        <button class="btn-mini" style="background:#059669; color:#fff; border-color:#059669;" onclick="exportStandaloneHtml('${encodeURIComponent(g)}', '${g}')">📥 Export Station HTML</button>
       </div>
     </div>
   `).join('');
@@ -878,21 +1028,19 @@ function closeDistributeModal() {
   document.getElementById('dist-modal').classList.remove('active');
 }
 
-// 生成分发链接与二维码
+// Generate distribution link and QR code
 function generateDistribution(groupEncoded, groupName) {
   const baseUrl = window.location.origin + window.location.pathname;
   let targetUrl = baseUrl;
   
-  // 提取对应数据（全量或组别）
   let targetData = [];
   if (groupEncoded) {
     const gName = decodeURIComponent(groupEncoded);
-    targetData = roster.filter(x => (x.group || '未分组') === gName);
+    targetData = roster.filter(x => (x.group || 'Unassigned') === gName);
   } else {
     targetData = roster;
   }
   
-  // 压缩数据
   const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(targetData));
   
   if (groupEncoded) {
@@ -901,10 +1049,9 @@ function generateDistribution(groupEncoded, groupName) {
     targetUrl = `${baseUrl}?pkg=${compressed}`;
   }
 
-  document.getElementById('qr-modal-title').textContent = `【${groupName}】专属核验入口`;
+  document.getElementById('qr-modal-title').textContent = `[${groupName}] Station Check-In Entry`;
   document.getElementById('qr-url-input').value = targetUrl;
   
-  // 渲染二维码
   const box = document.getElementById('qr-canvas-box');
   box.innerHTML = '';
   
@@ -918,7 +1065,7 @@ function generateDistribution(groupEncoded, groupName) {
       correctLevel: QRCode.CorrectLevel.M
     });
   } catch (err) {
-    box.innerHTML = '<span style="color:#ef4444;font-size:12px;">二维码生成失败，请直接复制下方链接</span>';
+    box.innerHTML = '<span style="color:#ef4444;font-size:12px;">Failed to generate QR code, please copy link below.</span>';
   }
 
   document.getElementById('qr-modal').classList.add('active');
@@ -935,15 +1082,15 @@ function copyQrUrl() {
   
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(input.value).then(() => {
-      alert('专属链接已复制到剪贴板！可直接粘贴发送到各岗位微信群。');
+      alert('Station link copied to clipboard!');
     });
   } else {
     document.execCommand('copy');
-    alert('专属链接已复制到剪贴板！可直接粘贴发送到各岗位微信群。');
+    alert('Station link copied to clipboard!');
   }
 }
 
-// ===== 傻瓜式 iOS 指引模态框 =====
+// Mobile Guide Modal
 function openIosGuideModal() {
   document.getElementById('ios-modal').classList.add('active');
 }
@@ -952,6 +1099,5 @@ function closeIosGuideModal() {
   document.getElementById('ios-modal').classList.remove('active');
 }
 </script>
-
 </body>
 </html>

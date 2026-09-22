@@ -6,9 +6,11 @@
   <meta http-equiv="Expires" content="0">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#2563eb">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="名单核验">
+  <link rel="manifest" href="manifest.json">
   <title>赛事志愿者物资与名单核验工具</title>
   <script id="preloaded-data-script">
     window.__PRELOADED_ROSTER__ = null;
@@ -21,6 +23,9 @@
     
     /* 顶部标题区 */
     .header { text-align: center; margin-bottom: 12px; position: relative; }
+    .header-top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .lang-switch { font-size: 12px; color: #2563eb; text-decoration: none; font-weight: 600; padding: 3px 8px; border: 1px solid #bfdbfe; border-radius: 6px; background: #eff6ff; }
+    .btn-reset-danger { font-size: 11px; color: #dc2626; border: 1px solid #fca5a5; background: #fff; padding: 3px 8px; border-radius: 6px; cursor: pointer; }
     .header h1 { font-size: 20px; color: #0f172a; margin-bottom: 3px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .header p { font-size: 13px; color: #64748b; }
     .header-help-btn { display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; font-size: 12px; color: #2563eb; background: #eff6ff; padding: 4px 10px; border-radius: 20px; border: 1px solid #bfdbfe; cursor: pointer; text-decoration: none; }
@@ -34,19 +39,31 @@
     
     /* 搜索框与吸顶 */
     .search-sticky { position: sticky; top: 6px; z-index: 99; background: #f8fafc; padding-bottom: 8px; }
-    .search-box { display: flex; gap: 8px; margin-bottom: 10px; }
-    input { flex: 1; padding: 12px 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 16px; outline: none; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.04); -webkit-appearance: none; }
-    input:focus { border-color: #2563eb; }
+    .search-box { display: flex; gap: 8px; margin-bottom: 8px; position: relative; }
+    .input-wrapper { position: relative; flex: 1; display: flex; align-items: center; }
+    input[type="text"] { width: 100%; padding: 12px 36px 12px 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 16px; outline: none; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.04); -webkit-appearance: none; }
+    input[type="text"]:focus { border-color: #2563eb; }
+    .btn-clear-kw { position: absolute; right: 10px; width: 22px; height: 22px; border-radius: 50%; background: #cbd5e1; color: #fff; border: none; font-size: 12px; font-weight: bold; cursor: pointer; display: none; align-items: center; justify-content: center; line-height: 1; }
+    .btn-clear-kw.show { display: flex; }
     .btn-search { padding: 0 16px; background: #2563eb; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
     
     /* 大按钮操作栏 */
-    .action-toolbar { display: flex; gap: 8px; margin-bottom: 12px; width: 100%; }
+    .action-toolbar { display: flex; gap: 8px; margin-bottom: 8px; width: 100%; }
     .btn-action { flex: 1; padding: 11px 6px; border: none; border-radius: 10px; font-size: 13.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.06); }
     .btn-action:active { opacity: 0.85; transform: scale(0.98); }
     .btn-add { background: #10b981; color: #fff; }
     .btn-csv { background: #0284c7; color: #fff; }
     .btn-distribute { background: #8b5cf6; color: #fff; }
     
+    /* 尺码分面筛选与统计栏 */
+    .size-facet-bar { display: flex; align-items: center; gap: 5px; overflow-x: auto; padding: 4px 0 6px 0; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .size-facet-bar::-webkit-scrollbar { display: none; }
+    .size-chip { flex-shrink: 0; padding: 4px 9px; font-size: 12px; font-weight: 600; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s ease; }
+    .size-chip:hover { border-color: #94a3b8; }
+    .size-chip.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .size-chip .badge-count { font-size: 10.5px; background: rgba(0,0,0,0.08); padding: 1px 5px; border-radius: 10px; }
+    .size-chip.active .badge-count { background: rgba(255,255,255,0.25); color: #fff; }
+
     /* 状态与统计 */
     .section-bar { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 6px 0; font-size: 13px; color: #64748b; }
     .tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
@@ -119,8 +136,12 @@
 
 <div class="container">
   <div class="header">
+    <div class="header-top-nav">
+      <a href="index.html" class="lang-switch">🌐 Switch to English</a>
+      <button class="btn-reset-danger" onclick="resetLocalData()" title="赛后销毁本地缓存">🗑️ 销毁本地数据</button>
+    </div>
     <h1>📋 赛事志愿者物资与名单核验</h1>
-    <p>单机安全运行 · 离线可用 · 现场隐私不泄露</p>
+    <p>单机安全运行 · 离线可用 · 现场隐私零泄露</p>
     <a href="javascript:void(0)" class="header-help-btn" onclick="openIosGuideModal()">📱 志愿者使用说明 / 存到手机桌面</a>
   </div>
 
@@ -136,7 +157,10 @@
 
   <div class="search-sticky">
     <div class="search-box">
-      <input type="text" id="kw" placeholder="输入姓名 / 编号 / 手机或身份证后4位" oninput="search()" onfocus="this.select()">
+      <div class="input-wrapper">
+        <input type="text" id="kw" placeholder="输入姓名 / 编号 / 手机或身份证后4位" oninput="onKwInput()" onfocus="this.select()">
+        <button id="btn-clear-kw" class="btn-clear-kw" onclick="clearKeyword()" title="清空搜索词">&times;</button>
+      </div>
       <button class="btn-search" onclick="search()">查询</button>
     </div>
 
@@ -145,6 +169,11 @@
       <button class="btn-action btn-add" onclick="openAddModal()">➕ 单条录入</button>
       <button class="btn-action btn-csv" onclick="openCsvModal()">📁 批量导入</button>
       <button class="btn-action btn-distribute" onclick="openDistributeModal()">🔗 岗位分发</button>
+    </div>
+
+    <!-- 尺码分面筛选条 -->
+    <div class="size-facet-bar" id="size-facet-bar">
+      <!-- 动态填充 -->
     </div>
   </div>
 
@@ -166,7 +195,7 @@
 
   <div class="section-bar">
     <span>核验结果列表 (<span id="result-count">0</span>)</span>
-    <span style="font-size:11px; color:#94a3b8;">支持拼音/首字母检索</span>
+    <span style="font-size:11px; color:#94a3b8;">纯本地内存匹配</span>
   </div>
   <div id="result-list"></div>
 </div>
@@ -199,10 +228,10 @@
       <input type="text" id="new-id" class="form-input" placeholder="用于后4位核对">
     </div>
     <div class="form-group">
-      <label class="form-label">物资/服装尺码</label>
-      <input type="text" id="new-size" class="form-input" placeholder="例如：L、XL、大号">
+      <label class="form-label">服装尺码 / 物资规格</label>
+      <input type="text" id="new-size" class="form-input" placeholder="例如：L、XL、均码、双肩包">
     </div>
-    <button class="btn-submit" onclick="saveNewRecord()">保存并载入列表</button>
+    <button class="btn-submit" onclick="saveNewRecord()">保存并存入本地</button>
   </div>
 </div>
 
@@ -210,27 +239,29 @@
 <div id="csv-modal" class="modal-overlay">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title">📁 批量导入名单 (CSV)</span>
+      <span class="modal-title">📁 批量导入名单表格 (CSV)</span>
       <button class="close-modal" onclick="closeCsvModal()">&times;</button>
     </div>
     <div style="font-size:12px; color:#64748b; margin-bottom:12px; line-height:1.4;">
-      💡 请选择 Excel 导出的 <strong>.csv</strong> 格式表格。数据完全在本地解析，不上传任何服务器，请放心使用。
+      支持 Excel / 飞书 / 腾讯文档导出的 <strong>.csv</strong> 格式。<br>
+      <span style="color:#10b981; font-weight:600;">🔒 零服务端传输：</span>文件仅在浏览器本地内存解析并存入手机 LocalStorage。
     </div>
     <div class="form-group">
+      <label class="form-label">选择 CSV 文件</label>
       <input type="file" id="csv-file-input" accept=".csv,text/csv" class="form-input" onchange="handleCsvFile(event)">
     </div>
-    <div id="csv-mapping-area" style="display:none; margin-top:14px; border-top:1px dashed #e2e8f0; padding-top:12px;">
-      <div style="font-size:13px; font-weight:700; color:#1e293b; margin-bottom:8px;">请确认表格列对应关系：</div>
+    <div id="csv-mapping-area" style="display: none; margin-top: 14px;">
+      <div style="font-weight: 700; font-size: 13px; color: #1e293b; margin-bottom: 8px;">匹配表格字段列：</div>
       <div class="form-group">
         <label class="form-label">姓名列 *</label>
         <select id="map-name" class="form-select"></select>
       </div>
       <div class="form-group">
-        <label class="form-label">编号 / 号码布列 *</label>
+        <label class="form-label">编号/号码布列 *</label>
         <select id="map-bib" class="form-select"></select>
       </div>
       <div class="form-group">
-        <label class="form-label">所属组别 / 岗位列 (可选)</label>
+        <label class="form-label">岗位/组别列 (可选)</label>
         <select id="map-group" class="form-select"></select>
       </div>
       <div class="form-group">
@@ -238,14 +269,14 @@
         <select id="map-phone" class="form-select"></select>
       </div>
       <div class="form-group">
-        <label class="form-label">身份证/证件号列 (可选)</label>
+        <label class="form-label">证件号码列 (可选)</label>
         <select id="map-id" class="form-select"></select>
       </div>
       <div class="form-group">
-        <label class="form-label">物资/衣服尺码列 (可选)</label>
+        <label class="form-label">尺码/物资列 (可选)</label>
         <select id="map-size" class="form-select"></select>
       </div>
-      <button class="btn-submit" onclick="confirmCsvImport()">确认并批量导入</button>
+      <button class="btn-submit btn-primary" onclick="confirmCsvImport()">确认导入并保存</button>
     </div>
   </div>
 </div>
@@ -297,7 +328,7 @@
       <div class="guide-step">
         <div class="guide-num">2</div>
         <div class="guide-text">
-          <strong>断网离线可用：</strong>页面打开后会自动离线缓存，现场地下室或大山里没有网络信号照样能顺畅核对。
+          <strong>断网离线可用：</strong>页面打开后会自动离线缓存（PWA技术），现场地下室或大山里没有网络信号照样能顺畅核对。
         </div>
       </div>
       <div class="guide-step">
@@ -339,6 +370,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
 // ===== 全局核心数据结构 =====
 let roster = [];
 let activeGroup = null; // 当前限定查看的组别 (null 为全部)
+let activeSize = null;  // 当前限定查看的尺码 (null 为全部)
 let staged = [];
 let history = [];
 let qrcodeInstance = null;
@@ -347,9 +379,16 @@ const CUSTOM_DATA_KEY = 'event_roster_custom_data_v2';
 const STAGED_KEY = 'event_roster_staged_v2';
 const HISTORY_KEY = 'event_roster_history_v2';
 
-// ===== 初始化 =====
+// 注册 Service Worker (PWA 完全离线支持)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => {
+      console.log('SW register hint:', err);
+    });
+  });
+}
 
-// 方案一：一键烘焙并导出带数据的单文件 HTML
+// 方案一：一键烘焙并导出带数据的单文件 HTML (纯净导出，无弹窗污染)
 function exportStandaloneHtml(groupEncoded, groupName) {
   let targetData = roster;
   let targetGroup = null;
@@ -363,8 +402,11 @@ function exportStandaloneHtml(groupEncoded, groupName) {
     return;
   }
 
-  // 获取当前网页完整 DOM
-  let html = document.documentElement.outerHTML;
+  // 克隆当前网页完整 DOM，清理弹窗 active 状态，保证导出文件打开即为纯净核验界面
+  const clone = document.documentElement.cloneNode(true);
+  clone.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('active'));
+  
+  let html = clone.outerHTML;
 
   // 构造内嵌数据的替换脚本
   const scriptRegex = /<script id="preloaded-data-script">[\s\S]*?<\/script>/;
@@ -411,15 +453,17 @@ window.addEventListener('DOMContentLoaded', () => {
     renderStaged();
     renderHistory();
     renderGroupBanner();
+    renderSizeFacetBar();
     search();
   } else {
     loadStoredData();
     handleUrlParams();
+    renderSizeFacetBar();
     search();
   }
 });
 
-// 处理 URL 中的岗位过滤或压缩数据包
+// 处理 URL 中的岗位过滤或扫码解压数据包
 function handleUrlParams() {
   const params = new URLSearchParams(window.location.search);
   
@@ -437,19 +481,17 @@ function handleUrlParams() {
       if (jsonStr) {
         const importedData = JSON.parse(jsonStr);
         if (Array.isArray(importedData) && importedData.length > 0) {
-          // 直接作为当前运行数据，并保存到本地
+          // 直接存入本地 LocalStorage，实现 100% 数据本地化
           roster = importedData;
           localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(importedData));
-          populateGroupSelects();
           renderGroupBanner();
-          renderStats();
+          renderSizeFacetBar();
           search();
-          console.log('成功通过扫码载入数据:', importedData.length);
           return;
         }
       }
     } catch (e) {
-      console.warn('URL 数据包解析失败:', e);
+      console.warn('URL 数据包解析异常:', e);
     }
   }
 
@@ -477,20 +519,125 @@ function renderGroupBanner() {
 function switchAllGroups() {
   activeGroup = null;
   renderGroupBanner();
+  renderSizeFacetBar();
   search();
 }
 
 // 加载本地数据
 function loadStoredData() {
-  const localCustom = JSON.parse(localStorage.getItem(CUSTOM_DATA_KEY) || '[]');
-  staged = JSON.parse(localStorage.getItem(STAGED_KEY) || '[]');
-  history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-  roster = localCustom;
+  try {
+    roster = JSON.parse(localStorage.getItem(CUSTOM_DATA_KEY) || '[]');
+    staged = JSON.parse(localStorage.getItem(STAGED_KEY) || '[]');
+    history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  } catch (e) {
+    roster = [];
+    staged = [];
+    history = [];
+  }
   renderStaged();
   renderHistory();
 }
 
-// 核心查询逻辑 (支持多字段、首字母拼音倒排、后四位匹配)
+// 赛后彻底销毁本地隐私数据
+function resetLocalData() {
+  if (confirm('⚠️ 确定要彻底销毁本地存储的赛事名单与核验记录吗？\n\n此操作将清空本机 LocalStorage 中的所有人员名单、暂存和核验历史，不可撤销！')) {
+    localStorage.removeItem(CUSTOM_DATA_KEY);
+    localStorage.removeItem(STAGED_KEY);
+    localStorage.removeItem(HISTORY_KEY);
+    roster = [];
+    staged = [];
+    history = [];
+    activeGroup = null;
+    activeSize = null;
+    document.getElementById('kw').value = '';
+    onKwInput();
+    renderGroupBanner();
+    renderStaged();
+    renderHistory();
+    renderSizeFacetBar();
+    search();
+    alert('已成功销毁本机所有赛事缓存数据！');
+  }
+}
+
+// 搜索框输入与一键清除
+function onKwInput() {
+  const val = document.getElementById('kw').value;
+  const btnClear = document.getElementById('btn-clear-kw');
+  if (val.length > 0) {
+    btnClear.classList.add('show');
+  } else {
+    btnClear.classList.remove('show');
+  }
+  search();
+}
+
+function clearKeyword() {
+  const kwInput = document.getElementById('kw');
+  kwInput.value = '';
+  document.getElementById('btn-clear-kw').classList.remove('show');
+  kwInput.focus();
+  search();
+}
+
+// 渲染尺码分面筛选条
+function renderSizeFacetBar() {
+  const bar = document.getElementById('size-facet-bar');
+  if (!bar) return;
+
+  // 当前可见候选池（依据 activeGroup 过滤）
+  let pool = roster;
+  if (activeGroup) {
+    pool = pool.filter(x => (x.group || '未分组') === activeGroup);
+  }
+
+  if (pool.length === 0) {
+    bar.innerHTML = '';
+    return;
+  }
+
+  // 统计尺码分布
+  const sizeMap = {};
+  pool.forEach(item => {
+    const s = (item.size || '均码').trim().toUpperCase();
+    sizeMap[s] = (sizeMap[s] || 0) + 1;
+  });
+
+  const knownOrder = ['S', 'M', 'L', 'XL', '2XL', '3XL'];
+  const allSizes = Object.keys(sizeMap).sort((a, b) => {
+    const idxA = knownOrder.indexOf(a);
+    const idxB = knownOrder.indexOf(b);
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+    if (idxA !== -1) return -1;
+    if (idxB !== -1) return 1;
+    return a.localeCompare(b);
+  });
+
+  let chipsHtml = `
+    <div class="size-chip ${activeSize === null ? 'active' : ''}" onclick="selectSize(null)">
+      全部 <span class="badge-count">${pool.length}</span>
+    </div>
+  `;
+
+  allSizes.forEach(s => {
+    const isAct = activeSize === s;
+    chipsHtml += `
+      <div class="size-chip ${isAct ? 'active' : ''}" onclick="selectSize('${s}')">
+        ${s} <span class="badge-count">${sizeMap[s]}</span>
+      </div>
+    `;
+  });
+
+  bar.innerHTML = chipsHtml;
+}
+
+function selectSize(size) {
+  activeSize = size;
+  renderSizeFacetBar();
+  search();
+}
+
+// 核心查询逻辑 (支持多字段、首字母拼音倒排、后四位匹配、尺码筛选)
 function search() {
   const kw = document.getElementById('kw').value.trim().toLowerCase();
   let pool = roster;
@@ -498,6 +645,11 @@ function search() {
   // 岗位隔离：若处于特定组别模式，只检索该组别
   if (activeGroup) {
     pool = pool.filter(x => (x.group || '未分组') === activeGroup);
+  }
+
+  // 尺码分面筛选
+  if (activeSize) {
+    pool = pool.filter(x => ((x.size || '均码').trim().toUpperCase()) === activeSize);
   }
 
   let matches = [];
@@ -513,7 +665,8 @@ function search() {
       const id = (p.id || '');
       const matchId = id.toLowerCase().endsWith(kw) || id.toLowerCase().includes(kw);
       const matchGroup = (p.group || '').toLowerCase().includes(kw);
-      return matchName || matchBib || matchPhone || matchId || matchGroup;
+      const matchSize = (p.size || '').toLowerCase().includes(kw);
+      return matchName || matchBib || matchPhone || matchId || matchGroup || matchSize;
     });
   }
 
@@ -635,7 +788,7 @@ function renderHistory() {
 
 function quickSearch(val) {
   document.getElementById('kw').value = val;
-  search();
+  onKwInput();
 }
 
 function clearHistory() {
@@ -688,6 +841,7 @@ function saveNewRecord() {
   document.getElementById('new-id').value = '';
   document.getElementById('new-size').value = '';
   
+  renderSizeFacetBar();
   search();
   alert('录入成功！已存入本地名单库。');
 }
@@ -699,6 +853,7 @@ function deleteRecord(bib) {
     localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(roster));
     localStorage.setItem(STAGED_KEY, JSON.stringify(staged));
     renderStaged();
+    renderSizeFacetBar();
     search();
   }
 }
@@ -736,7 +891,11 @@ function handleCsvFile(e) {
   reader.readAsText(file, 'utf-8');
 }
 
+// 强化版 CSV 解析，支持引号、换行与去除 UTF-8 BOM
 function parseCSV(text) {
+  if (text.charCodeAt(0) === 0xFEFF) {
+    text = text.slice(1);
+  }
   const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
   return lines.map(line => {
     let result = [];
@@ -760,10 +919,10 @@ function parseCSV(text) {
 
 function setupMappingSelects() {
   const fields = [
-    { id: 'map-name', match: ['姓名', '名字', '志愿者', '选手'] },
-    { id: 'map-bib', match: ['号码', '编号', '号码布', 'bib', '序号'] },
-    { id: 'map-group', match: ['组别', '岗位', '分组', '小组', '部门', 'group'] },
-    { id: 'map-phone', match: ['电话', '手机', '联系方式', 'phone', 'tel'] },
+    { id: 'map-name', match: ['姓名', '名字', '志愿者', '选手', 'name'] },
+    { id: 'map-bib', match: ['号码', '编号', '号码布', 'bib', '序号', 'id号'] },
+    { id: 'map-group', match: ['组别', '岗位', '分组', '小组', '部门', 'group', 'station'] },
+    { id: 'map-phone', match: ['电话', '手机', '联系方式', 'phone', 'tel', 'mobile'] },
     { id: 'map-id', match: ['证件', '身份证', '证件号', 'id'] },
     { id: 'map-size', match: ['尺码', '服装', '衣服', 'size', '物资'] }
   ];
@@ -824,6 +983,7 @@ function confirmCsvImport() {
 
   localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(roster));
   closeCsvModal();
+  renderSizeFacetBar();
   search();
   alert(`成功批量导入 ${count} 条记录并保存到本地名单库！`);
 }
@@ -892,7 +1052,7 @@ function generateDistribution(groupEncoded, groupName) {
     targetData = roster;
   }
   
-  // 压缩数据
+  // 纯本地压缩数据，生成无后端的便携传输包
   const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(targetData));
   
   if (groupEncoded) {
@@ -943,7 +1103,7 @@ function copyQrUrl() {
   }
 }
 
-// ===== 傻瓜式 iOS 指引模态框 =====
+// ===== iOS 指引模态框 =====
 function openIosGuideModal() {
   document.getElementById('ios-modal').classList.add('active');
 }
@@ -952,6 +1112,5 @@ function closeIosGuideModal() {
   document.getElementById('ios-modal').classList.remove('active');
 }
 </script>
-
 </body>
 </html>
