@@ -130,6 +130,101 @@
     .guide-num { background: #2563eb; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
     .guide-text { font-size: 13px; color: #334155; line-height: 1.4; }
     .guide-text strong { color: #0f172a; }
+  
+    /* WeChat / In-App Browser Guidance Banner */
+    #wechat-guide-banner {
+      display: none;
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 1px solid #f59e0b;
+      color: #92400e;
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    #wechat-guide-banner.show { display: flex; }
+    #wechat-guide-banner .guide-icon { font-size: 16px; margin-right: 6px; }
+    #wechat-guide-banner .guide-btn {
+      background: #b45309;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      font-weight: 600;
+      white-space: nowrap;
+      margin-left: 8px;
+    }
+
+    /* Paper Document Sign-off Status & Filter Bar */
+    #doc-sign-bar {
+      display: none;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .doc-stat-text {
+      font-size: 12px;
+      color: #166534;
+      font-weight: 600;
+    }
+    .doc-filter-group {
+      display: flex;
+      gap: 4px;
+    }
+    .doc-filter-btn {
+      padding: 3px 8px;
+      font-size: 11px;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: #475569;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .doc-filter-btn.active {
+      background: #16a34a;
+      border-color: #16a34a;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* Volunteer Card Paper Sign-off Button */
+    .btn-doc-sign {
+      padding: 5px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      color: #64748b;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+    .btn-doc-sign.signed {
+      background: #dcfce7;
+      border-color: #86efac;
+      color: #15803d;
+    }
+    .btn-doc-sign.unsigned {
+      background: #fef9c3;
+      border-color: #fde047;
+      color: #a16207;
+    }
+
   </style>
 </head>
 <body>
@@ -156,7 +251,24 @@
   </div>
 
   <div class="search-sticky">
-    <div class="search-box">
+    
+      <!-- WeChat In-App Browser Guidance Banner -->
+      <div id="wechat-guide-banner">
+        <div><span class="guide-icon">💡</span>Offline mode active! Avoid closing or refreshing inside WeChat browser.</div>
+        <button class="guide-btn" onclick="openIosGuideModal()">Add to Home Screen</button>
+      </div>
+
+      <!-- Paper Document Sign-off Status & Filter Bar -->
+      <div id="doc-sign-bar">
+        <div class="doc-stat-text" id="doc-stat-summary">📋 Document Sign-off: 0 signed / 0 pending</div>
+        <div class="doc-filter-group">
+          <button class="doc-filter-btn active" id="doc-filter-all" onclick="setDocFilter('all')">All</button>
+          <button class="doc-filter-btn" id="doc-filter-unsigned" onclick="setDocFilter('unsigned')">Unsigned Only</button>
+          <button class="doc-filter-btn" id="doc-filter-signed" onclick="setDocFilter('signed')">Signed Only</button>
+        </div>
+      </div>
+
+      <div class="search-box">
       <div class="input-wrapper">
         <input type="text" id="kw" placeholder="Search by name, bib, or last 4 digits of phone/ID" oninput="onKwInput()" onfocus="this.select()">
         <button id="btn-clear-kw" class="btn-clear-kw" onclick="clearKeyword()" title="Clear keyword">&times;</button>
@@ -291,6 +403,22 @@
     <div style="font-size:12px; color:#64748b; margin-bottom:12px; line-height:1.4;">
       Generate custom station QR codes or standalone offline files. Volunteers will <strong>only access data for their assigned station</strong> with zero mutual interference!
     </div>
+    
+    <!-- Publisher Configuration: Paper Document Sign-off -->
+    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <span style="font-weight:700; font-size:13px; color:#1e293b;">📋 On-site Paper Document Sign-off Verification</span>
+        <input type="checkbox" id="dist-doc-toggle" onchange="onToggleDocSetting(this.checked)" style="transform:scale(1.2); cursor:pointer;">
+      </div>
+      <div style="font-size:12px; color:#64748b; margin-bottom:8px;">
+        Enable sign-off tracking on each card and status filter bar to prevent physical paper sheet omissions.
+      </div>
+      <div id="dist-doc-name-wrap" style="display:none; align-items:center; gap:8px;">
+        <span style="font-size:12px; color:#334155; font-weight:600; white-space:nowrap;">Target Document Title:</span>
+        <input type="text" id="dist-doc-name-input" class="form-input" style="font-size:12px; padding:4px 8px; flex:1;" value="Gear Receipt Form" placeholder="e.g. Gear Receipt, Waiver, Sign-in Sheet" oninput="onDocNameChange(this.value)">
+      </div>
+    </div>
+
     <div id="dist-groups-container"></div>
   </div>
 </div>
@@ -368,6 +496,13 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
 
 <script>
 // ===== Global Core Data Structures =====
+let docSignedRecords = {}; // Record format: { [bib]: { signed: true, time: "..." } }
+let activeDocFilter = 'all'; // 'all' | 'unsigned' | 'signed'
+let docSetting = { enabled: false, name: 'Gear Receipt Form' };
+
+const DOC_RECORDS_KEY = 'event_roster_doc_signed_v2';
+const DOC_SETTING_KEY = 'event_roster_doc_setting_v2';
+
 let roster = [];
 let activeGroup = null; // Filter by station (null for all)
 let activeSize = null;  // Filter by size (null for all)
@@ -378,6 +513,72 @@ let qrcodeInstance = null;
 const CUSTOM_DATA_KEY = 'event_roster_custom_data_v2';
 const STAGED_KEY = 'event_roster_staged_v2';
 const HISTORY_KEY = 'event_roster_history_v2';
+
+
+// ===== Paper Document Sign-off Logic =====
+function onToggleDocSetting(enabled) {
+  docSetting.enabled = enabled;
+  const wrap = document.getElementById('dist-doc-name-wrap');
+  if (wrap) wrap.style.display = enabled ? 'flex' : 'none';
+  localStorage.setItem(DOC_SETTING_KEY, JSON.stringify(docSetting));
+  updateDocSignBar();
+  search();
+}
+
+function onDocNameChange(name) {
+  docSetting.name = name.trim() || 'Gear Receipt Form';
+  localStorage.setItem(DOC_SETTING_KEY, JSON.stringify(docSetting));
+  updateDocSignBar();
+  search();
+}
+
+function toggleDocSigned(bib) {
+  if (!bib) return;
+  const current = docSignedRecords[bib];
+  if (current && current.signed) {
+    delete docSignedRecords[bib];
+  } else {
+    docSignedRecords[bib] = {
+      signed: true,
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    };
+  }
+  localStorage.setItem(DOC_RECORDS_KEY, JSON.stringify(docSignedRecords));
+  updateDocSignBar();
+  search();
+}
+
+function setDocFilter(mode) {
+  activeDocFilter = mode;
+  ['all', 'unsigned', 'signed'].forEach(m => {
+    const btn = document.getElementById('doc-filter-' + m);
+    if (btn) btn.classList.toggle('active', m === mode);
+  });
+  search();
+}
+
+function updateDocSignBar() {
+  const bar = document.getElementById('doc-sign-bar');
+  if (!bar) return;
+  if (!docSetting.enabled) {
+    bar.style.display = 'none';
+    return;
+  }
+  bar.style.display = 'flex';
+
+  const currentScopedList = activeGroup ? roster.filter(p => p.group === activeGroup) : roster;
+  let signedCount = 0;
+  currentScopedList.forEach(p => {
+    if (docSignedRecords[p.bib] && docSignedRecords[p.bib].signed) {
+      signedCount++;
+    }
+  });
+  const unsignedCount = currentScopedList.length - signedCount;
+  const summaryElem = document.getElementById('doc-stat-summary');
+  if (summaryElem) {
+    summaryElem.innerHTML = `📋 <strong>${docSetting.name || 'Document'}</strong>: <span style="color:#15803d">${signedCount} Signed</span> / <span style="color:#b45309">${unsignedCount} Pending</span>`;
+  }
+}
 
 // Register Service Worker (PWA Full Offline Support)
 if ('serviceWorker' in navigator) {
@@ -437,6 +638,13 @@ function exportStandaloneHtml(groupEncoded, groupName) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  // WeChat Browser Detection
+  const isWechat = /MicroMessenger/i.test(navigator.userAgent);
+  if (isWechat) {
+    const banner = document.getElementById('wechat-guide-banner');
+    if (banner) banner.classList.add('show');
+  }
+
   if (window.__PRELOADED_ROSTER__ && Array.isArray(window.__PRELOADED_ROSTER__) && window.__PRELOADED_ROSTER__.length > 0) {
     roster = window.__PRELOADED_ROSTER__;
     if (window.__DEFAULT_GROUP__) {
@@ -634,15 +842,26 @@ function selectSize(size) {
 
 // Core search logic
 function search() {
-  const kw = document.getElementById('kw').value.trim().toLowerCase();
+  const kw = (document.getElementById('kw') ? document.getElementById('kw').value : '').trim().toLowerCase();
   let pool = roster;
 
+  // Station isolation
   if (activeGroup) {
     pool = pool.filter(x => (x.group || 'Unassigned') === activeGroup);
   }
 
+  // Size facet filter
   if (activeSize) {
     pool = pool.filter(x => ((x.size || 'Standard').trim().toUpperCase()) === activeSize);
+  }
+
+  // Paper document sign-off filter
+  if (docSetting.enabled && activeDocFilter !== 'all') {
+    if (activeDocFilter === 'signed') {
+      pool = pool.filter(p => docSignedRecords[p.bib] && docSignedRecords[p.bib].signed);
+    } else if (activeDocFilter === 'unsigned') {
+      pool = pool.filter(p => !docSignedRecords[p.bib] || !docSignedRecords[p.bib].signed);
+    }
   }
 
   let matches = [];
@@ -663,6 +882,7 @@ function search() {
   }
 
   renderResults(matches);
+  updateDocSignBar();
 }
 
 // Render cards
