@@ -738,10 +738,20 @@ function loadStoredData() {
     roster = JSON.parse(localStorage.getItem(CUSTOM_DATA_KEY) || '[]');
     staged = JSON.parse(localStorage.getItem(STAGED_KEY) || '[]');
     history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    const storedDocRecords = localStorage.getItem(DOC_RECORDS_KEY);
+    if (storedDocRecords) {
+      docSignedRecords = JSON.parse(storedDocRecords);
+    }
+    const storedDocSetting = localStorage.getItem(DOC_SETTING_KEY);
+    if (storedDocSetting) {
+      docSetting = JSON.parse(storedDocSetting);
+    }
   } catch (e) {
     roster = [];
     staged = [];
     history = [];
+    docSignedRecords = {};
+    docSetting = { enabled: false, name: '物资领取单' };
   }
   renderStaged();
   renderHistory();
@@ -753,9 +763,13 @@ function resetLocalData() {
     localStorage.removeItem(CUSTOM_DATA_KEY);
     localStorage.removeItem(STAGED_KEY);
     localStorage.removeItem(HISTORY_KEY);
+    localStorage.removeItem(DOC_RECORDS_KEY);
+    localStorage.removeItem(DOC_SETTING_KEY);
     roster = [];
     staged = [];
     history = [];
+    docSignedRecords = {};
+    docSetting = { enabled: false, name: '物资领取单' };
     activeGroup = null;
     activeSize = null;
     document.getElementById('kw').value = '';
@@ -846,6 +860,72 @@ function selectSize(size) {
   search();
 }
 
+// ===== 拼音首字母与百家姓全拼极速索引 =====
+const SURNAMES_PINYIN = {
+  '李': 'li', '王': 'wang', '张': 'zhang', '刘': 'liu', '陈': 'chen',
+  '杨': 'yang', '赵': 'zhao', '黄': 'huang', '周': 'zhou', '吴': 'wu',
+  '徐': 'xu', '孙': 'sun', '胡': 'hu', '朱': 'zhu', '高': 'gao',
+  '林': 'lin', '何': 'he', '郭': 'guo', '马': 'ma', '罗': 'luo',
+  '梁': 'liang', '宋': 'song', '郑': 'zheng', '谢': 'xie', '韩': 'han',
+  '唐': 'tang', '冯': 'feng', '于': 'yu', '董': 'dong', '萧': 'xiao',
+  '程': 'cheng', '曹': 'cao', '袁': 'yuan', '邓': 'deng', '许': 'xu',
+  '傅': 'fu', '沈': 'shen', '曾': 'zeng', '彭': 'peng', '吕': 'lv',
+  '苏': 'su', '卢': 'lu', '蒋': 'jiang', '蔡': 'cai', '贾': 'jia',
+  '丁': 'ding', '魏': 'wei', '薛': 'xue', '叶': 'ye', '阎': 'yan',
+  '余': 'yu', '潘': 'pan', '杜': 'du', '戴': 'dai', '夏': 'xia',
+  '钟': 'zhong', '汪': 'wang', '田': 'tian', '任': 'ren', '姜': 'jiang',
+  '范': 'fan', '方': 'fang', '石': 'shi', '姚': 'yao', '谭': 'tan',
+  '廖': 'liao', '邹': 'zou', '熊': 'xiong', '金': 'jin', '陆': 'lu',
+  '郝': 'hao', '孔': 'kong', '白': 'bai', '崔': 'cui', '康': 'kang',
+  '毛': 'mao', '邱': 'qiu', '秦': 'qin', '江': 'jiang', '史': 'shi',
+  '顾': 'gu', '侯': 'hou', '邵': 'shao', '孟': 'meng', '龙': 'long',
+  '万': 'wan', '段': 'duan', '雷': 'lei', '钱': 'qian', '汤': 'tang',
+  '尹': 'yin', '黎': 'li', '易': 'yi', '常': 'chang', '武': 'wu',
+  '乔': 'qiao', '贺': 'he', '赖': 'lai', '龚': 'gong', '文': 'wen'
+};
+const PINYIN_CHARS = ['吖', '芭', '擦', '搭', '蛾', '发', '噶', '哈', '击', '喀', '垃', '妈', '拿', '噢', '啪', '期', '然', '撒', '塌', '挖', '昔', '压', '匝'];
+const PINYIN_LETTERS = 'abcdefghjklmnopqrstwxyz';
+let pinyinCollator = null;
+
+function getCharInitial(ch) {
+  if (!/[\u4e00-\u9fa5]/.test(ch)) return ch.toLowerCase();
+  try {
+    if (!pinyinCollator) pinyinCollator = new Intl.Collator('zh-Hans-CN');
+    for (let i = PINYIN_CHARS.length - 1; i >= 0; i--) {
+      if (pinyinCollator.compare(ch, PINYIN_CHARS[i]) >= 0) {
+        return PINYIN_LETTERS[i];
+      }
+    }
+  } catch (e) {}
+  return 'a';
+}
+
+function getPinyinInitials(str) {
+  return Array.from(str || '').map(getCharInitial).join('');
+}
+
+function matchPinyin(name, kw) {
+  if (!name || !kw) return false;
+  kw = kw.toLowerCase().trim();
+  if (!/^[a-z0-9]+$/.test(kw)) return false;
+
+  const initials = getPinyinInitials(name);
+  if (initials.includes(kw)) return true;
+
+  const first = name[0];
+  if (SURNAMES_PINYIN[first]) {
+    const sPy = SURNAMES_PINYIN[first];
+    if (sPy.startsWith(kw)) return true;
+    if (kw.startsWith(sPy)) {
+      const rest = kw.slice(sPy.length);
+      const restInitials = initials.slice(1);
+      if (rest.length === 0 || restInitials.startsWith(rest)) return true;
+      if (rest.length > 0 && restInitials.length > 0 && rest[0] === restInitials[0]) return true;
+    }
+  }
+  return false;
+}
+
 // 核心查询逻辑 (支持多字段、首字母拼音倒排、后四位匹配、尺码筛选)
 function search() {
   const kw = (document.getElementById('kw') ? document.getElementById('kw').value : '').trim().toLowerCase();
@@ -877,6 +957,7 @@ function search() {
   } else {
     matches = pool.filter(p => {
       const matchName = (p.name || '').toLowerCase().includes(kw);
+      const matchPy = matchPinyin(p.name, kw);
       const matchBib = (p.bib || '').toLowerCase().includes(kw);
       const phone = (p.phone || '');
       const matchPhone = phone.endsWith(kw) || phone.includes(kw);
@@ -884,7 +965,7 @@ function search() {
       const matchId = id.toLowerCase().endsWith(kw) || id.toLowerCase().includes(kw);
       const matchGroup = (p.group || '').toLowerCase().includes(kw);
       const matchSize = (p.size || '').toLowerCase().includes(kw);
-      return matchName || matchBib || matchPhone || matchId || matchGroup || matchSize;
+      return matchName || matchPy || matchBib || matchPhone || matchId || matchGroup || matchSize;
     });
   }
 
@@ -906,6 +987,13 @@ function renderResults(list) {
   container.innerHTML = list.map(p => {
     const isStg = staged.includes(p.bib);
     const groupBadge = p.group ? `<span class="group-pill">🏷️ ${p.group}</span>` : '';
+    const isDocSigned = docSignedRecords[p.bib] && docSignedRecords[p.bib].signed;
+    const docSignBtn = docSetting.enabled ? `
+      <button class="btn-doc-sign ${isDocSigned ? 'signed' : 'unsigned'}" onclick="toggleDocSigned('${p.bib}')">
+        ${isDocSigned ? `✓ 已签 (${docSignedRecords[p.bib].time || ''})` : `✍️ 签领${docSetting.name || '单据'}`}
+      </button>
+    ` : '';
+
     return `
       <div class="card">
         <div class="card-top">
@@ -926,6 +1014,7 @@ function renderResults(list) {
         </div>
         <div class="action-bar">
           <button class="clear-link" style="border:none;background:none;color:#ef4444;" onclick="deleteRecord('${p.bib}')">删除</button>
+          ${docSignBtn}
           <button class="btn-stage ${isStg ? 'btn-staged' : ''}" onclick="toggleStage('${p.bib}', '${p.name}')">
             ${isStg ? '已暂存 (移出)' : '暂存待领'}
           </button>
