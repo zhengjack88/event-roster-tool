@@ -8,12 +8,29 @@
 
 ---
 
+## 📸 Screenshots
+
+**Mobile — roster cards with sign-off status**
+![Mobile roster](screenshots/mobile-main.png)
+
+**Station distribution center — QR code or standalone HTML per group**
+![Distribution center](screenshots/distribution.png)
+
+**Desktop view**
+![Desktop view](screenshots/desktop-main.png)
+
+**Chinese version**
+![Chinese version](screenshots/mobile-zh.png)
+
+---
+
 ## 🌟 Key Features (v2.2)
 
 ### 0. 🆕 What's new in v2.2
 - **Full JSON backup & restore**: export roster, paper sign-off records, sign-off settings, recent history and staged queue into one dated `roster-backup-YYYY-MM-DD.json` file, and restore it in one tap (with an explicit overwrite confirmation) after clearing browser cache or switching devices.
 - **GBK-aware CSV import**: files are read as raw bytes — UTF-8 is detected first (BOM included) and GBK is used automatically when needed, so CSV files re-saved from Chinese Excel no longer produce garbled names. The detected encoding is shown in the import dialog.
 - **RFC 4180 CSV parser**: a proper character-level state machine handles `""` escaped quotes and newlines inside quoted cells, and warns about suspected duplicates (same name + phone, or same bib number) before importing.
+- **Chinese header auto-recognition**: CSV column headers in Chinese (姓名、电话、号码簿、分组、尺码、身份证) are now auto-mapped to the right fields, alongside the existing English keywords — no more manual column selection for Chinese rosters.
 - **QR capacity protection**: if a group's compressed payload exceeds 2000 characters, QR generation is blocked with a clear explanation and a one-click switch to the standalone HTML export instead of a cryptic `Too long data` failure.
 - **Sign-off state travels with distribution**: exported station files and QR links now carry that group's paper sign-off records plus the sign-off setting, so a receiving phone immediately shows who has already been checked off.
 - **Print support**: a print button renders just the currently filtered roster, with a header showing group, date and headcount.
