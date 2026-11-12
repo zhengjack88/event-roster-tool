@@ -1,9 +1,10 @@
-const CACHE_NAME = 'roster-tool-v2.1';
+const CACHE_NAME = 'roster-tool-v2.2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './index_zh.html',
-  './manifest.json'
+  './manifest.json',
+  './apple-touch-icon.png'
 ];
 
 self.addEventListener('install', (e) => {

@@ -8,12 +8,23 @@
 
 ---
 
-## 🌟 Key Features (v2.0 Major Upgrade)
+## 🌟 Key Features (v2.2)
+
+### 0. 🆕 What's new in v2.2
+- **Full JSON backup & restore**: export roster, paper sign-off records, sign-off settings, recent history and staged queue into one dated `roster-backup-YYYY-MM-DD.json` file, and restore it in one tap (with an explicit overwrite confirmation) after clearing browser cache or switching devices.
+- **GBK-aware CSV import**: files are read as raw bytes — UTF-8 is detected first (BOM included) and GBK is used automatically when needed, so CSV files re-saved from Chinese Excel no longer produce garbled names. The detected encoding is shown in the import dialog.
+- **RFC 4180 CSV parser**: a proper character-level state machine handles `""` escaped quotes and newlines inside quoted cells, and warns about suspected duplicates (same name + phone, or same bib number) before importing.
+- **QR capacity protection**: if a group's compressed payload exceeds 2000 characters, QR generation is blocked with a clear explanation and a one-click switch to the standalone HTML export instead of a cryptic `Too long data` failure.
+- **Sign-off state travels with distribution**: exported station files and QR links now carry that group's paper sign-off records plus the sign-off setting, so a receiving phone immediately shows who has already been checked off.
+- **Print support**: a print button renders just the currently filtered roster, with a header showing group, date and headcount.
+- **Sorting**: sort the result list by name, group or clothing size — import order remains the default.
+- **Result cap notice**: when a filter matches more than 60 people the list says exactly how many matched, instead of silently showing 60 cards.
+- **iOS home-screen icon**: a proper 180×180 `apple-touch-icon.png` replaces the page-screenshot icon.
 
 ### 1. 🔗 Manager Station Distribution Center (Data Isolation)
 - **Automatic Group Extraction**: Automatically parses and groups volunteers/participants by department or station (e.g., Check-in, Material Handout, Medical Post, Timing Station).
-- **📦 One-Click Standalone HTML Export**: Managers can export self-contained, pre-baked HTML files for any specific station (e.g., `Event_Checkin_Station.html`). Shared via chat or email, volunteers opening this file can only access their assigned station roster — ensuring airtight physical data isolation.
-- **📱 Scan-to-Go QR Data Transfer**: Powered by LZ-String high-efficiency compression, roster subsets are encoded directly into QR codes or custom URLs. Volunteers can scan the QR code via WeChat or camera to cache their group's roster locally — fully functional even with zero cell service.
+- **📦 One-Click Standalone HTML Export**: Managers can export self-contained, pre-baked HTML files for any specific station (e.g., `Event_Checkin_Station.html`). Shared via chat or email, volunteers opening this file can only access their assigned station roster — ensuring airtight physical data isolation. The file also carries that group's paper sign-off state (v2.2).
+- **📱 Scan-to-Go QR Data Transfer**: Powered by LZ-String high-efficiency compression, roster subsets are encoded directly into QR codes or custom URLs. Volunteers can scan the QR code via WeChat or camera to cache their group's roster locally — fully functional even with zero cell service. Groups too large for a QR code are offered the HTML export instead (v2.2).
 
 ### 2. 📲 Native iOS / Safari Experience (PWA Fullscreen App)
 - **Zero App Store Downloads**: Fully compliant with PWA specifications, including step-by-step onboarding modal guides.
@@ -22,15 +33,19 @@
 
 ### 3. 📁 Smart CSV Import & Dynamic Header Mapping
 - Flexible fuzzy column detection for various CSV/Excel headers (Name, Phone, Group/Station, Clothing Size, Bib/ID, Remarks).
+- Encodings are auto-detected: UTF-8 first, GBK fallback for CSV files re-saved from Chinese Excel (`v2.2`).
+- Standards-compliant CSV parsing (quoted `""` escapes, multi-line cells) with a duplicate warning before import (`v2.2`).
 - Live data staging with one-click persistence to browser `localStorage` to prevent accidental data loss.
 
 ### 4. ⚡ Millisecond Multi-Dimensional Search
 - Instant fuzzy/exact search across **Name**, **Phone (supports last 4 digits)**, **Bib / Badge ID**, and **Personal ID**.
 - Mobile-optimized "✕ Quick Clear" button for rapid on-site lookups.
 - Clothing size facets (S / M / L / XL / 2XL / 3XL) with real-time headcounts.
+- Sort results by name, group or size, and print the current filtered list (`v2.2`).
 
 ### 5. 🔒 Complete Privacy & Data Security
 - **100% Client-Side**: No backend API calls or telemetry tracking. Roster data never leaves the user's browser.
+- One-tap JSON backup and restore so a cleared cache or a new phone never costs you the roster (`v2.2`).
 - Emergency "Clear Cache" button to instantly destroy sensitive event data after the race.
 
 ---

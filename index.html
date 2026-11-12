@@ -11,10 +11,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="RosterCheck">
   <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <title>Event Volunteer & Supply Verification Tool</title>
   <script id="preloaded-data-script">
     window.__PRELOADED_ROSTER__ = null;
     window.__DEFAULT_GROUP__ = null;
+    window.__PRELOADED_DOC_SETTING__ = null;
+    window.__PRELOADED_DOC_RECORDS__ = null;
   </script>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; padding: 0; }
@@ -225,6 +228,35 @@
       color: #a16207;
     }
 
+    /* ===== v2.2: data tools, sorting, print, QR overflow, CSV encoding ===== */
+    .data-tools { display: flex; gap: 6px; margin-bottom: 8px; }
+    .btn-tool { flex: 1; padding: 7px 4px; font-size: 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; color: #475569; font-weight: 600; cursor: pointer; }
+    .btn-tool:active { background: #f1f5f9; }
+    .sort-select { font-size: 11.5px; padding: 3px 6px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; color: #475569; font-weight: 600; }
+    .limit-hint { display: none; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 7px 10px; margin-bottom: 8px; font-size: 12px; color: #92400e; font-weight: 600; }
+    #csv-encoding-hint { display: none; margin-top: 8px; font-size: 12px; font-weight: 600; color: #15803d; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 7px 10px; }
+    #qr-overflow-box { display: none; width: 100%; text-align: left; background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+    #qr-overflow-box .overflow-title { font-size: 13px; font-weight: 800; color: #b91c1c; margin-bottom: 4px; }
+    #qr-overflow-box .overflow-text { font-size: 12px; color: #7f1d1d; line-height: 1.5; margin-bottom: 10px; }
+    .btn-export-fallback { width: 100%; padding: 10px; border: none; border-radius: 8px; background: #10b981; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .print-header { display: none; }
+    @media print {
+      @page { margin: 12mm 10mm; }
+      html, body { background: #fff !important; padding: 0 !important; margin: 0 !important; }
+      .header, #group-banner, .search-sticky, .staged-box, .tags-wrap,
+      .section-bar, .limit-hint, #doc-sign-bar, .modal-overlay, #site-footer { display: none !important; }
+      .container { max-width: 100% !important; margin: 0 !important; }
+      .print-header { display: block !important; border-bottom: 2px solid #111827; padding-bottom: 6px; margin-bottom: 10px; }
+      .print-title { font-size: 16px; font-weight: 800; color: #000; }
+      .print-meta { font-size: 11px; color: #333; margin-top: 3px; }
+      .card { box-shadow: none !important; border: 1px solid #cbd5e1 !important; padding: 8px 10px !important; margin-bottom: 6px !important; break-inside: avoid; page-break-inside: avoid; }
+      .card-top { margin-bottom: 4px !important; padding-bottom: 3px !important; }
+      .name { font-size: 14px !important; }
+      .bib { font-size: 13px !important; }
+      .info-row { font-size: 11px !important; margin-bottom: 2px !important; }
+      .action-bar, .empty { display: none !important; }
+    }
+
   </style>
 </head>
 <body>
@@ -283,6 +315,14 @@
       <button class="btn-action btn-distribute" onclick="openDistributeModal()">🔗 Distribute</button>
     </div>
 
+    <!-- Data Safety & Print Toolbar (v2.2) -->
+    <div class="data-tools">
+      <button class="btn-tool" onclick="exportBackup()" title="Download a full JSON backup of roster, sign-off records and history">💾 Export Backup</button>
+      <button class="btn-tool" onclick="triggerRestoreBackup()" title="Restore a previously exported JSON backup">♻️ Restore Backup</button>
+      <button class="btn-tool" onclick="printRoster()" title="Print the currently filtered list">🖨️ Print List</button>
+      <input type="file" id="restore-file-input" accept=".json,application/json" style="display:none" onchange="handleRestoreFile(event)">
+    </div>
+
     <!-- Size Facet Filter Bar -->
     <div class="size-facet-bar" id="size-facet-bar">
       <!-- Injected dynamically -->
@@ -307,7 +347,19 @@
 
   <div class="section-bar">
     <span>Verification Results (<span id="result-count">0</span>)</span>
-    <span style="font-size:11px; color:#94a3b8;">Local In-Memory Search</span>
+    <span style="font-size:11px; color:#94a3b8; display:inline-flex; align-items:center; gap:6px;">
+      <select id="sort-select" class="sort-select" onchange="onSortChange(this.value)" title="Sort the result list">
+        <option value="import">Import order</option>
+        <option value="name">By name</option>
+        <option value="group">By group</option>
+        <option value="size">By size</option>
+      </select>
+    </span>
+  </div>
+  <div id="result-limit-hint" class="limit-hint"></div>
+  <div class="print-header" id="print-header">
+    <div class="print-title" id="print-title">Roster</div>
+    <div class="print-meta" id="print-meta"></div>
   </div>
   <div id="result-list"></div>
 </div>
@@ -362,6 +414,7 @@
       <label class="form-label">Choose CSV File</label>
       <input type="file" id="csv-file-input" accept=".csv,text/csv" class="form-input" onchange="handleCsvFile(event)">
     </div>
+    <div id="csv-encoding-hint"></div>
     <div id="csv-mapping-area" style="display: none; margin-top: 14px;">
       <div style="font-weight: 700; font-size: 13px; color: #1e293b; margin-bottom: 8px;">Map Spreadsheet Columns:</div>
       <div class="form-group">
@@ -432,9 +485,14 @@
     </div>
     <div id="qr-container">
       <div id="qr-canvas-box"></div>
+      <div id="qr-overflow-box">
+        <div class="overflow-title">⚠️ Group too large for a QR code</div>
+        <div class="overflow-text" id="qr-overflow-msg"></div>
+        <button class="btn-export-fallback" onclick="exportFromQrModal()">📥 Export Station HTML File</button>
+      </div>
       <p style="font-size: 13px; color: #475569; margin-top: 10px; font-weight: 600;" id="qr-tip-text">Scan with phone camera to load roster directly into local storage</p>
       <input type="text" id="qr-url-input" class="form-input" readonly style="margin-top: 10px; font-size: 12px; color: #64748b;" onclick="this.select()">
-      <button class="btn-submit btn-primary" style="margin-top: 8px;" onclick="copyQrUrl()">📋 Copy Link</button>
+      <button class="btn-submit btn-primary" id="qr-copy-btn" style="margin-top: 8px;" onclick="copyQrUrl()">📋 Copy Link</button>
     </div>
   </div>
 </div>
@@ -481,9 +539,10 @@
   </div>
 </div>
 
-<div style="text-align:center; padding: 20px 12px 30px; font-size:0.8rem; color:#64748b; line-height: 1.6;">
+<div id="site-footer" style="text-align:center; padding: 20px 12px 30px; font-size:0.8rem; color:#64748b; line-height: 1.6;">
   <span>🎗️ Free for all sports events, non-profits, and volunteer organizations · 100% Local Privacy</span><br>
-  <span style="font-size:0.72rem; color:#94a3b8;">If this tool assists your operations, a volunteer certificate of honor is sincerely appreciated.</span>
+  <span style="font-size:0.72rem; color:#94a3b8;">If this tool assists your operations, a volunteer certificate of honor is sincerely appreciated.</span><br>
+  <span id="version-label" style="font-size:0.7rem; color:#cbd5e1;">v2.2</span>
 </div>
 
 <!-- Embedded Core Compression & QR Code Libraries -->
@@ -514,8 +573,331 @@ const CUSTOM_DATA_KEY = 'event_roster_custom_data_v2';
 const STAGED_KEY = 'event_roster_staged_v2';
 const HISTORY_KEY = 'event_roster_history_v2';
 
+// ===== Version & Shared Limits (v2.2) =====
+const APP_VERSION = 'v2.2';
+const QR_MAX_PAYLOAD_CHARS = 2000;   // Conservative QR ceiling (EC level M, version 40); above this we fall back to HTML export
+const MAX_RENDERED_CARDS = 60;       // Cards drawn per result view (on-site rendering performance)
+const BACKUP_KEYS = [CUSTOM_DATA_KEY, DOC_RECORDS_KEY, DOC_SETTING_KEY, HISTORY_KEY, STAGED_KEY];
+
+let activeSort = 'import';           // 'import' | 'name' | 'group' | 'size'
+let filteredMatches = [];            // Full match set for the current filter (before the render cap)
+let qrFallbackGroupEncoded = '';
+let qrFallbackGroupName = '';
+let printPending = false;
+
+
 
 // ===== Paper Document Sign-off Logic =====
+// ===== v2.2: JSON helpers =====
+function parseJsonSafe(raw, fallback) {
+  if (raw === null || raw === undefined || raw === '') return fallback;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed === null ? fallback : parsed;
+  } catch (e) {
+    return fallback;
+  }
+}
+
+function safeJsonForScript(value) {
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
+// ===== Full backup & restore (P0-2) =====
+function exportBackup() {
+  if (roster.length === 0 && Object.keys(docSignedRecords).length === 0) {
+    if (!confirm('There is no roster or sign-off data on this device yet. Export an empty backup anyway?')) return;
+  }
+
+  const payload = {
+    app: 'event-roster-tool',
+    version: APP_VERSION,
+    exportedAt: new Date().toISOString(),
+    counts: {
+      roster: roster.length,
+      signed: Object.keys(docSignedRecords).length,
+      staged: staged.length,
+      history: history.length
+    },
+    data: {
+      [CUSTOM_DATA_KEY]: roster,
+      [DOC_RECORDS_KEY]: docSignedRecords,
+      [DOC_SETTING_KEY]: docSetting,
+      [HISTORY_KEY]: history,
+      [STAGED_KEY]: staged
+    }
+  };
+
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const fileName = 'roster-backup-' + now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + '.json';
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  alert('Backup saved as {file} ({n} people).'.replace('{file}', fileName).replace('{n}', roster.length));
+}
+
+function triggerRestoreBackup() {
+  const input = document.getElementById('restore-file-input');
+  if (!input) return;
+  input.value = '';
+  input.click();
+}
+
+function handleRestoreFile(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    let payload = null;
+    try {
+      payload = JSON.parse(evt.target.result);
+    } catch (err) {
+      alert('This file is not a valid JSON backup.');
+      return;
+    }
+
+    const data = payload && payload.data && typeof payload.data === 'object' ? payload.data : null;
+    if (!data || !BACKUP_KEYS.some(k => Object.prototype.hasOwnProperty.call(data, k))) {
+      alert('Invalid backup: no recognisable roster data was found in this file.');
+      return;
+    }
+    if (data[CUSTOM_DATA_KEY] !== null && data[CUSTOM_DATA_KEY] !== undefined && !Array.isArray(data[CUSTOM_DATA_KEY])) {
+      alert('Invalid backup: the roster section is corrupted.');
+      return;
+    }
+
+    const rosterCount = Array.isArray(data[CUSTOM_DATA_KEY]) ? data[CUSTOM_DATA_KEY].length : 0;
+    const signedCount = (data[DOC_RECORDS_KEY] && typeof data[DOC_RECORDS_KEY] === 'object') ? Object.keys(data[DOC_RECORDS_KEY]).length : 0;
+    const when = payload.exportedAt ? new Date(payload.exportedAt).toLocaleString('en-US') : 'unknown date';
+
+    const confirmMsg = '⚠️ Restoring this backup will OVERWRITE all roster, sign-off and history data on this device.\n\nBackup date: {when}\nBackup version: {version}\nRoster: {n} people · Sign-off records: {signed}\n\nContinue?'
+      .replace('{when}', when)
+      .replace('{version}', payload.version || '?')
+      .replace('{n}', rosterCount)
+      .replace('{signed}', signedCount);
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      BACKUP_KEYS.forEach(key => {
+        if (!Object.prototype.hasOwnProperty.call(data, key)) return;
+        const value = data[key];
+        if (value === null || value === undefined) {
+          localStorage.removeItem(key);
+        } else {
+          localStorage.setItem(key, JSON.stringify(value));
+        }
+      });
+    } catch (err2) {
+      alert('Restore failed: local storage is full or unavailable. ' + (err2 && err2.message ? err2.message : err2));
+      return;
+    }
+
+    // Re-hydrate every in-memory structure from the restored snapshot
+    roster = [];
+    staged = [];
+    history = [];
+    docSignedRecords = {};
+    docSetting = { enabled: false, name: 'Gear Receipt Form' };
+    activeGroup = null;
+    activeSize = null;
+    activeDocFilter = 'all';
+    activeSort = 'import';
+    const sortSel = document.getElementById('sort-select');
+    if (sortSel) sortSel.value = 'import';
+    const kwInput = document.getElementById('kw');
+    if (kwInput) kwInput.value = '';
+    const clearBtn = document.getElementById('btn-clear-kw');
+    if (clearBtn) clearBtn.classList.remove('show');
+
+    loadStoredData();
+    syncDocControls();
+    renderGroupBanner();
+    renderSizeFacetBar();
+    renderStaged();
+    renderHistory();
+    search();
+    alert('Backup restored: {n} people, {signed} sign-off records.'.replace('{n}', roster.length).replace('{signed}', Object.keys(docSignedRecords).length));
+  };
+  reader.onerror = function() {
+    alert('Unable to read the backup file.');
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+// ===== Sign-off control sync (shared by restore / QR / HTML import) =====
+function syncDocControls() {
+  const toggle = document.getElementById('dist-doc-toggle');
+  if (toggle) toggle.checked = !!docSetting.enabled;
+
+  const nameInput = document.getElementById('dist-doc-name-input');
+  if (nameInput) nameInput.value = docSetting.name || 'Gear Receipt Form';
+
+  const wrap = document.getElementById('dist-doc-name-wrap');
+  if (wrap) wrap.style.display = docSetting.enabled ? 'flex' : 'none';
+
+  ['all', 'unsigned', 'signed'].forEach(m => {
+    const btn = document.getElementById('doc-filter-' + m);
+    if (btn) btn.classList.toggle('active', m === activeDocFilter);
+  });
+
+  updateDocSignBar();
+}
+
+// ===== Sorting (P2-3) =====
+const SIZE_SORT_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', '4XL', '5XL'];
+let sortCollator = null;
+
+function getSortCollator() {
+  if (sortCollator) return sortCollator;
+  try {
+    sortCollator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
+  } catch (e) {
+    sortCollator = { compare: (a, b) => String(a).localeCompare(String(b)) };
+  }
+  return sortCollator;
+}
+
+function sortMatches(list) {
+  if (!list || list.length < 2 || activeSort === 'import') return list;
+  const coll = getSortCollator();
+  const byName = (a, b) => coll.compare(a.name || '', b.name || '');
+  const copy = list.slice();
+
+  if (activeSort === 'name') {
+    copy.sort(byName);
+  } else if (activeSort === 'group') {
+    copy.sort((a, b) => coll.compare(a.group || '', b.group || '') || byName(a, b));
+  } else if (activeSort === 'size') {
+    const rank = s => {
+      const idx = SIZE_SORT_ORDER.indexOf(String(s || '').trim().toUpperCase());
+      return idx === -1 ? 999 : idx;
+    };
+    copy.sort((a, b) => (rank(a.size) - rank(b.size)) || byName(a, b));
+  }
+  return copy;
+}
+
+function onSortChange(mode) {
+  activeSort = mode || 'import';
+  search();
+}
+
+// ===== Result cap notice (P2-2) =====
+function updateResultLimitHint(total) {
+  const hint = document.getElementById('result-limit-hint');
+  if (!hint) return;
+  if (total > MAX_RENDERED_CARDS) {
+    hint.style.display = 'block';
+    hint.textContent = 'Total {total} matches — showing the first {shown}. Please narrow your search.'.replace('{total}', total).replace('{shown}', MAX_RENDERED_CARDS);
+  } else {
+    hint.style.display = 'none';
+    hint.textContent = '';
+  }
+}
+
+// ===== Print current filtered list (P2-1) =====
+function updatePrintHeader(total) {
+  const title = document.getElementById('print-title');
+  const meta = document.getElementById('print-meta');
+  if (!title || !meta) return;
+
+  const scope = activeGroup || 'All Groups';
+  const parts = [new Date().toLocaleDateString('en-US'), '{n} people'.replace('{n}', total)];
+  if (activeSize) parts.push('Size: {v}'.replace('{v}', activeSize));
+  if (docSetting.enabled && activeDocFilter !== 'all') {
+    parts.push(activeDocFilter === 'signed' ? 'Signed only' : 'Unsigned only');
+  }
+  title.textContent = 'Roster — {scope}'.replace('{scope}', scope);
+  meta.textContent = parts.join(' · ');
+}
+
+function printRoster() {
+  if (!filteredMatches || filteredMatches.length === 0) {
+    alert('Nothing to print: the current filter matches no records.');
+    return;
+  }
+  printPending = true;
+  renderResults(filteredMatches, true);
+  updatePrintHeader(filteredMatches.length);
+  window.print();
+}
+
+window.addEventListener('afterprint', () => {
+  if (!printPending) return;
+  printPending = false;
+  search();
+});
+
+// ===== Distribution payload: roster + this group's sign-off state (P1-1) =====
+function buildDistributionPayload(groupName) {
+  const targetData = groupName
+    ? roster.filter(x => (x.group || 'Unassigned') === groupName)
+    : roster.slice();
+
+  const bibSet = {};
+  targetData.forEach(p => { if (p.bib) bibSet[p.bib] = true; });
+
+  const records = {};
+  Object.keys(docSignedRecords).forEach(bib => {
+    const rec = docSignedRecords[bib];
+    if (bibSet[bib] && rec && rec.signed) {
+      records[bib] = { signed: true, time: rec.time || '' };
+    }
+  });
+
+  return {
+    v: 2,
+    group: groupName || null,
+    roster: targetData,
+    docSetting: { enabled: !!docSetting.enabled, name: docSetting.name || 'Gear Receipt Form' },
+    docRecords: records
+  };
+}
+
+function applyDocPayload(payload) {
+  if (!payload || typeof payload !== 'object') return;
+
+  if (payload.docSetting && typeof payload.docSetting === 'object') {
+    const nm = payload.docSetting.name ? String(payload.docSetting.name).trim() : '';
+    docSetting = { enabled: !!payload.docSetting.enabled, name: nm || 'Gear Receipt Form' };
+  }
+
+  if (payload.docRecords && typeof payload.docRecords === 'object') {
+    Object.keys(payload.docRecords).forEach(bib => {
+      const rec = payload.docRecords[bib];
+      if (rec && rec.signed) {
+        docSignedRecords[bib] = { signed: true, time: rec.time || '' };
+      }
+    });
+  }
+
+  try {
+    localStorage.setItem(DOC_SETTING_KEY, JSON.stringify(docSetting));
+    localStorage.setItem(DOC_RECORDS_KEY, JSON.stringify(docSignedRecords));
+  } catch (e) {}
+
+  syncDocControls();
+}
+
+function exportFromQrModal() {
+  const encoded = qrFallbackGroupEncoded;
+  const name = qrFallbackGroupName;
+  closeQrModal();
+  exportStandaloneHtml(encoded, name);
+}
+
 function onToggleDocSetting(enabled) {
   docSetting.enabled = enabled;
   const wrap = document.getElementById('dist-doc-name-wrap');
@@ -603,16 +985,21 @@ function exportStandaloneHtml(groupEncoded, groupName) {
     return;
   }
 
+  // Roster + this group's paper sign-off state travel together (P1-1)
+  const payload = buildDistributionPayload(targetGroup);
+
   // Clone document and remove active modals so exported file opens cleanly
   const clone = document.documentElement.cloneNode(true);
   clone.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('active'));
-  
+
   let html = clone.outerHTML;
 
   const scriptRegex = /<script id="preloaded-data-script">[\s\S]*?<\/script>/;
   const newScript = `<script id="preloaded-data-script">
-    window.__PRELOADED_ROSTER__ = ${JSON.stringify(targetData)};
-    window.__DEFAULT_GROUP__ = ${JSON.stringify(targetGroup)};
+    window.__PRELOADED_ROSTER__ = ${safeJsonForScript(payload.roster)};
+    window.__DEFAULT_GROUP__ = ${safeJsonForScript(targetGroup)};
+    window.__PRELOADED_DOC_SETTING__ = ${safeJsonForScript(payload.docSetting)};
+    window.__PRELOADED_DOC_RECORDS__ = ${safeJsonForScript(payload.docRecords)};
   <\/script>`;
 
   if (scriptRegex.test(html)) {
@@ -645,6 +1032,10 @@ window.addEventListener('DOMContentLoaded', () => {
     if (banner) banner.classList.add('show');
   }
 
+  // Version label (single source of truth: APP_VERSION)
+  const versionEl = document.getElementById('version-label');
+  if (versionEl) versionEl.textContent = APP_VERSION;
+
   if (window.__PRELOADED_ROSTER__ && Array.isArray(window.__PRELOADED_ROSTER__) && window.__PRELOADED_ROSTER__.length > 0) {
     roster = window.__PRELOADED_ROSTER__;
     if (window.__DEFAULT_GROUP__) {
@@ -657,6 +1048,15 @@ window.addEventListener('DOMContentLoaded', () => {
       staged = [];
       history = [];
     }
+
+    // Sign-off state that travelled with this package (P1-1)
+    const storedDocRecords = parseJsonSafe(localStorage.getItem(DOC_RECORDS_KEY), {});
+    docSignedRecords = (storedDocRecords && typeof storedDocRecords === 'object') ? storedDocRecords : {};
+    docSetting = parseJsonSafe(localStorage.getItem(DOC_SETTING_KEY), { enabled: false, name: 'Gear Receipt Form' });
+    applyDocPayload({
+      docSetting: window.__PRELOADED_DOC_SETTING__ || null,
+      docRecords: window.__PRELOADED_DOC_RECORDS__ || null
+    });
     renderStaged();
     renderHistory();
     renderGroupBanner();
@@ -684,11 +1084,23 @@ function handleUrlParams() {
     try {
       const jsonStr = LZString.decompressFromEncodedURIComponent(pkgData);
       if (jsonStr) {
-        const importedData = JSON.parse(jsonStr);
-        if (Array.isArray(importedData) && importedData.length > 0) {
+        const importedPacket = JSON.parse(jsonStr);
+        let importedData = null;
+        let docPayload = null;
+
+        if (Array.isArray(importedPacket)) {
+          importedData = importedPacket;                 // Legacy links (v2.1): roster only
+        } else if (importedPacket && Array.isArray(importedPacket.roster)) {
+          importedData = importedPacket.roster;          // v2.2 packet: roster + sign-off state
+          docPayload = importedPacket;
+          if (!activeGroup && importedPacket.group) activeGroup = importedPacket.group;
+        }
+
+        if (importedData && importedData.length > 0) {
           // Direct local storage persistence (100% Client-Side)
           roster = importedData;
           localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(importedData));
+          if (docPayload) applyDocPayload(docPayload);
           renderGroupBanner();
           renderSizeFacetBar();
           search();
@@ -751,6 +1163,7 @@ function loadStoredData() {
   }
   renderStaged();
   renderHistory();
+  syncDocControls();
 }
 
 // Purge all local data after event
@@ -946,7 +1359,7 @@ function search() {
 
   let matches = [];
   if (!kw) {
-    matches = pool.slice(0, 60);
+    matches = pool.slice();
   } else {
     matches = pool.filter(p => {
       const matchName = (p.name || '').toLowerCase().includes(kw);
@@ -962,22 +1375,28 @@ function search() {
     });
   }
 
-  renderResults(matches);
+  filteredMatches = sortMatches(matches);
+  renderResults(filteredMatches);
+  updateResultLimitHint(filteredMatches.length);
+  updatePrintHeader(filteredMatches.length);
   updateDocSignBar();
 }
 
 // Render cards
-function renderResults(list) {
+function renderResults(list, showAll) {
   const container = document.getElementById('result-list');
   const countElem = document.getElementById('result-count');
-  countElem.textContent = list.length;
+  if (countElem) countElem.textContent = list.length;
 
-  if (list.length === 0) {
+  // Cap rendered cards for on-site performance, except when printing the full list (P2-2)
+  const visible = showAll ? list : list.slice(0, MAX_RENDERED_CARDS);
+
+  if (visible.length === 0) {
     container.innerHTML = `<div class="empty">No matching records found<br><span style="font-size:12px; color:#cbd5e1;">Try name, bib number, or last 4 digits of phone/ID</span></div>`;
     return;
   }
 
-  container.innerHTML = list.map(p => {
+  container.innerHTML = visible.map(p => {
     const isStg = staged.includes(p.bib);
     const groupBadge = p.group ? `<span class="group-pill">🏷️ ${p.group}</span>` : '';
     const isDocSigned = docSignedRecords[p.bib] && docSignedRecords[p.bib].signed;
@@ -1173,58 +1592,143 @@ function closeCsvModal() {
   document.getElementById('csv-mapping-area').style.display = 'none';
 }
 
+// Decode a CSV buffer: UTF-8 first (BOM aware), GBK fallback for Chinese Excel exports (P0-1)
+function decodeCsvBuffer(buffer) {
+  const bytes = new Uint8Array(buffer);
+  const hasBom = bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF;
+
+  try {
+    const utf8 = new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+    return { text: utf8, encoding: hasBom ? 'UTF-8 (BOM)' : 'UTF-8' };
+  } catch (utf8Err) {
+    try {
+      const gbk = new TextDecoder('gbk').decode(buffer);
+      return { text: gbk, encoding: 'GBK' };
+    } catch (gbkErr) {
+      return { text: new TextDecoder('utf-8').decode(buffer), encoding: 'UTF-8 (forced)' };
+    }
+  }
+}
+
 function handleCsvFile(e) {
   const file = e.target.files[0];
   if (!file) return;
 
+  const hint = document.getElementById('csv-encoding-hint');
+  if (hint) {
+    hint.style.display = 'none';
+    hint.textContent = '';
+  }
+
   const reader = new FileReader();
   reader.onload = function(evt) {
-    const text = evt.target.result;
+    let decoded;
+    try {
+      decoded = decodeCsvBuffer(evt.target.result);
+    } catch (err) {
+      alert('Unable to read this CSV file.');
+      return;
+    }
+
+    let text = decoded.text;
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+
     const parsed = parseCSV(text);
     if (!parsed || parsed.length < 2) {
       alert('CSV file is empty or invalid!');
       return;
     }
+
     csvHeaders = parsed[0].map(h => h.trim());
     csvRows = parsed.slice(1);
+
+    if (hint) {
+      hint.style.display = 'block';
+      let note = '✓ Decoded as {enc}.'.replace('{enc}', decoded.encoding);
+      if (decoded.encoding === 'GBK') note += ' Chinese Excel default encoding — Chinese text should now display correctly.';
+      if (decoded.encoding === 'UTF-8 (forced)') note += ' Some characters may be garbled; please re-save the file as CSV UTF-8.';
+      hint.textContent = note;
+    }
+
     setupMappingSelects();
   };
-  reader.readAsText(file, 'utf-8');
+  reader.onerror = function() {
+    alert('Unable to read this CSV file.');
+  };
+  reader.readAsArrayBuffer(file);
 }
 
+// RFC4180 character state machine: handles "" escapes and newlines inside quoted fields (P1-2)
 function parseCSV(text) {
-  if (text.charCodeAt(0) === 0xFEFF) {
-    text = text.slice(1);
-  }
-  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
-  return lines.map(line => {
-    let result = [];
-    let cur = '';
-    let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuotes = false;
+  let i = 0;
+
+  while (i < text.length) {
+    const c = text[i];
+
+    if (inQuotes) {
       if (c === '"') {
-        inQuotes = !inQuotes;
-      } else if (c === ',' && !inQuotes) {
-        result.push(cur.replace(/^"|"$/g, '').trim());
-        cur = '';
-      } else {
-        cur += c;
+        if (text[i + 1] === '"') {
+          field += '"';          // Escaped quote inside a quoted field
+          i += 2;
+          continue;
+        }
+        inQuotes = false;        // Closing quote
+        i++;
+        continue;
       }
+      field += c;
+      i++;
+      continue;
     }
-    result.push(cur.replace(/^"|"$/g, '').trim());
-    return result;
-  });
+
+    if (c === '"') {
+      inQuotes = true;
+      i++;
+      continue;
+    }
+    if (c === ',') {
+      row.push(field);
+      field = '';
+      i++;
+      continue;
+    }
+    if (c === '\r' || c === '\n') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      row.push(field);
+      field = '';
+      rows.push(row);
+      row = [];
+      i++;
+      continue;
+    }
+    field += c;
+    i++;
+  }
+
+  if (field.length > 0 || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+
+  return rows
+    .map(r => r.map(v => v.trim()))
+    .filter(r => r.some(v => v.length > 0));
 }
 
 function setupMappingSelects() {
   const fields = [
-    { id: 'map-name', match: ['name', 'volunteer', 'runner', 'athlete', 'fullname'] },
-    { id: 'map-bib', match: ['bib', 'number', 'no', 'id', 'code'] },
-    { id: 'map-group', match: ['station', 'group', 'team', 'role', 'dept'] },
-    { id: 'map-phone', match: ['phone', 'tel', 'mobile', 'cell', 'contact'] },
-    { id: 'map-id', match: ['passport', 'gov', 'identity', 'ssn'] },
-    { id: 'map-size', match: ['size', 'gear', 'shirt', 't-shirt'] }
+    { id: 'map-name', match: ['name', 'volunteer', 'runner', 'athlete', 'fullname', '姓名', '名字', '志愿者', '选手', '参赛者', '人员'] },
+    { id: 'map-bib', match: ['bib', 'number', 'no', 'id', 'code', '号码簿', '编号', '参赛号'] },
+    { id: 'map-group', match: ['station', 'group', 'team', 'role', 'dept', '分组', '岗位', '站点', '组别', '部门', '团队'] },
+    { id: 'map-phone', match: ['phone', 'tel', 'mobile', 'cell', 'contact', '电话', '手机', '手机号', '联系电话'] },
+    { id: 'map-id', match: ['passport', 'gov', 'identity', 'ssn', '身份证', '证件', '护照', '证件号'] },
+    { id: 'map-size', match: ['size', 'gear', 'shirt', 't-shirt', '尺码', '尺寸'] }
   ];
 
   fields.forEach(f => {
@@ -1260,23 +1764,58 @@ function confirmCsvImport() {
     return;
   }
 
-  let count = 0;
+  // Normalise rows first (trim cells, drop fully blank lines)
+  const incoming = [];
   csvRows.forEach(row => {
-    const name = row[nameIdx] || '';
-    const bib = row[bibIdx] || '';
+    const name = (row[nameIdx] || '').trim();
+    const bib = (row[bibIdx] || '').trim();
     if (!name && !bib) return;
+    incoming.push({
+      name: name,
+      bib: bib,
+      group: groupIdx !== -1 ? (row[groupIdx] || '').trim() : '',
+      phone: phoneIdx !== -1 ? (row[phoneIdx] || '').trim() : '',
+      id: idIdx !== -1 ? (row[idIdx] || '').trim() : '',
+      size: sizeIdx !== -1 ? (row[sizeIdx] || '').trim() : ''
+    });
+  });
 
-    const group = groupIdx !== -1 ? (row[groupIdx] || '') : '';
-    const phone = phoneIdx !== -1 ? (row[phoneIdx] || '') : '';
-    const id = idIdx !== -1 ? (row[idIdx] || '') : '';
-    const size = sizeIdx !== -1 ? (row[sizeIdx] || '') : '';
+  if (incoming.length === 0) {
+    alert('No importable rows were found in this file.');
+    return;
+  }
 
-    const newRec = { name, bib, group, phone, id, size };
-    const existingIdx = roster.findIndex(x => x.bib === bib);
+  // Duplicate detection: repeated bib, or same name + phone (P1-2)
+  const seenBib = {};
+  const seenNamePhone = {};
+  const existingBibs = {};
+  roster.forEach(p => { if (p.bib) existingBibs[String(p.bib).toLowerCase()] = true; });
+
+  let dupCount = 0;
+  let overwriteCount = 0;
+  incoming.forEach(rec => {
+    const bibKey = rec.bib.toLowerCase();
+    const npKey = (rec.name && rec.phone) ? rec.name + '||' + rec.phone : '';
+    if ((bibKey && seenBib[bibKey]) || (npKey && seenNamePhone[npKey])) dupCount++;
+    if (bibKey && existingBibs[bibKey]) overwriteCount++;
+    if (bibKey) seenBib[bibKey] = true;
+    if (npKey) seenNamePhone[npKey] = true;
+  });
+
+  if (dupCount > 0 || overwriteCount > 0) {
+    let warn = '';
+    if (dupCount > 0) warn += `⚠️ Found ${dupCount} suspected duplicate row(s) — same name + phone, or same bib number.\n`;
+    if (overwriteCount > 0) warn += `${overwriteCount} row(s) will overwrite existing records with the same bib number.\n`;
+    if (!confirm(warn + '\nContinue with the import?')) return;
+  }
+
+  let count = 0;
+  incoming.forEach(rec => {
+    const existingIdx = roster.findIndex(x => x.bib === rec.bib);
     if (existingIdx > -1) {
-      roster[existingIdx] = newRec;
+      roster[existingIdx] = rec;
     } else {
-      roster.push(newRec);
+      roster.push(rec);
     }
     count++;
   });
@@ -1285,12 +1824,12 @@ function confirmCsvImport() {
   closeCsvModal();
   renderSizeFacetBar();
   search();
-  alert(`Successfully imported ${count} entries into local device!`);
+  alert('Successfully imported {n} entries into local device!'.replace('{n}', count));
 }
 
-// ===== Station Distribution Center =====
 function openDistributeModal() {
   const container = document.getElementById('dist-groups-container');
+  syncDocControls();
   
   const groupsMap = {};
   roster.forEach(item => {
@@ -1340,30 +1879,52 @@ function closeDistributeModal() {
 // Generate distribution link and QR code
 function generateDistribution(groupEncoded, groupName) {
   const baseUrl = window.location.origin + window.location.pathname;
-  let targetUrl = baseUrl;
-  
-  let targetData = [];
-  if (groupEncoded) {
-    const gName = decodeURIComponent(groupEncoded);
-    targetData = roster.filter(x => (x.group || 'Unassigned') === gName);
-  } else {
-    targetData = roster;
-  }
-  
-  const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(targetData));
-  
-  if (groupEncoded) {
-    targetUrl = `${baseUrl}?group=${groupEncoded}&pkg=${compressed}`;
-  } else {
-    targetUrl = `${baseUrl}?pkg=${compressed}`;
-  }
+  const gName = groupEncoded ? decodeURIComponent(groupEncoded) : null;
+
+  // Roster + this group's sign-off state are packed together (P1-1)
+  const payload = buildDistributionPayload(gName);
+  const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(payload));
+
+  qrFallbackGroupEncoded = groupEncoded || '';
+  qrFallbackGroupName = groupName || '';
+
+  const box = document.getElementById('qr-canvas-box');
+  const overflowBox = document.getElementById('qr-overflow-box');
+  const overflowMsg = document.getElementById('qr-overflow-msg');
+  const urlInput = document.getElementById('qr-url-input');
+  const copyBtn = document.getElementById('qr-copy-btn');
+  const tip = document.getElementById('qr-tip-text');
 
   document.getElementById('qr-modal-title').textContent = `[${groupName}] Station Check-In Entry`;
-  document.getElementById('qr-url-input').value = targetUrl;
-  
-  const box = document.getElementById('qr-canvas-box');
   box.innerHTML = '';
-  
+
+  // Capacity guard: never hand qrcodejs a payload it cannot encode (P0-3)
+  if (compressed.length > QR_MAX_PAYLOAD_CHARS) {
+    if (overflowBox) overflowBox.style.display = 'block';
+    if (overflowMsg) {
+      overflowMsg.innerHTML = 'This group has <strong>{n}</strong> people — the compressed payload is <strong>{len}</strong> characters, over the QR limit of <strong>{limit}</strong>.<br>Please distribute the standalone HTML file instead.'
+        .replace('{n}', payload.roster.length)
+        .replace('{len}', compressed.length)
+        .replace('{limit}', QR_MAX_PAYLOAD_CHARS);
+    }
+    box.style.display = 'none';
+    if (urlInput) { urlInput.value = ''; urlInput.style.display = 'none'; }
+    if (copyBtn) copyBtn.style.display = 'none';
+    if (tip) tip.textContent = 'QR code not generated — this group is too large for a QR code.';
+    document.getElementById('qr-modal').classList.add('active');
+    return;
+  }
+
+  const targetUrl = groupEncoded
+    ? `${baseUrl}?group=${groupEncoded}&pkg=${compressed}`
+    : `${baseUrl}?pkg=${compressed}`;
+
+  if (overflowBox) overflowBox.style.display = 'none';
+  box.style.display = 'inline-block';
+  if (urlInput) { urlInput.value = targetUrl; urlInput.style.display = 'block'; }
+  if (copyBtn) copyBtn.style.display = 'block';
+  if (tip) tip.textContent = 'Scan with phone camera to load roster directly into local storage';
+
   try {
     new QRCode(box, {
       text: targetUrl,
@@ -1374,7 +1935,7 @@ function generateDistribution(groupEncoded, groupName) {
       correctLevel: QRCode.CorrectLevel.M
     });
   } catch (err) {
-    box.innerHTML = '<span style="color:#ef4444;font-size:12px;">Failed to generate QR code, please copy link below.</span>';
+    box.innerHTML = '<span style="color:#ef4444;font-size:12px;">' + 'Failed to generate QR code, please copy the link below.' + '</span>';
   }
 
   document.getElementById('qr-modal').classList.add('active');
