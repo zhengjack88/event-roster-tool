@@ -24,9 +24,12 @@
 
 ---
 
-## 🌟 Key Features (v2.2)
+## 🌟 Key Features (v2.3)
 
-### 0. 🆕 What's new in v2.2
+### 0. 🆕 What's new in v2.3
+- **Import from exported HTML file**: a new "Import from HTML File" button in the data import dialog lets volunteers pick an HTML file previously exported by this tool (e.g. one downloaded from WeChat/QQ) and load its roster directly in the browser — no server involved, the file is only read locally. This solves the iOS problem where HTML files received in WeChat/QQ cannot be opened directly; iPhone users download the file to the Files app first, then import it here.
+
+#### Previous updates (v2.2)
 - **Full JSON backup & restore**: export roster, paper sign-off records, sign-off settings, recent history and staged queue into one dated `roster-backup-YYYY-MM-DD.json` file, and restore it in one tap (with an explicit overwrite confirmation) after clearing browser cache or switching devices.
 - **GBK-aware CSV import**: files are read as raw bytes — UTF-8 is detected first (BOM included) and GBK is used automatically when needed, so CSV files re-saved from Chinese Excel no longer produce garbled names. The detected encoding is shown in the import dialog.
 - **RFC 4180 CSV parser**: a proper character-level state machine handles `""` escaped quotes and newlines inside quoted cells, and warns about suspected duplicates (same name + phone, or same bib number) before importing.
@@ -41,7 +44,7 @@
 ### 1. 🔗 Manager Station Distribution Center (Data Isolation)
 - **Automatic Group Extraction**: Automatically parses and groups volunteers/participants by department or station (e.g., Check-in, Material Handout, Medical Post, Timing Station).
 - **📦 One-Click Standalone HTML Export**: Managers can export self-contained, pre-baked HTML files for any specific station (e.g., `Event_Checkin_Station.html`). Shared via chat or email, volunteers opening this file can only access their assigned station roster — ensuring airtight physical data isolation. The file also carries that group's paper sign-off state (v2.2).
-- **📱 Scan-to-Go QR Data Transfer**: Powered by LZ-String high-efficiency compression, roster subsets are encoded directly into QR codes or custom URLs. Volunteers can scan the QR code via WeChat or camera to cache their group's roster locally — fully functional even with zero cell service. Groups too large for a QR code are offered the HTML export instead (v2.2).
+- **📱 Scan-to-Go QR Data Transfer**: Powered by LZ-String high-efficiency compression, roster subsets are encoded directly into QR codes or custom URLs. Volunteers scan the QR code via WeChat or camera to load the page (network required on first open); once loaded, the group's roster is stored locally in the browser and works offline. Groups too large for a QR code are offered the HTML export instead (v2.2).
 
 ### 2. 📲 Native iOS / Safari Experience (PWA Fullscreen App)
 - **Zero App Store Downloads**: Fully compliant with PWA specifications, including step-by-step onboarding modal guides.
@@ -53,6 +56,7 @@
 - Encodings are auto-detected: UTF-8 first, GBK fallback for CSV files re-saved from Chinese Excel (`v2.2`).
 - Standards-compliant CSV parsing (quoted `""` escapes, multi-line cells) with a duplicate warning before import (`v2.2`).
 - Live data staging with one-click persistence to browser `localStorage` to prevent accidental data loss.
+- **Import from Exported HTML File** (`v2.3`): In the same import dialog, tap **"Import from HTML File"** to read an HTML file exported by this tool directly in your browser (never uploaded to any server), making it easy for iPhone users to load rosters downloaded from WeChat/QQ via the Files app.
 
 ### 4. ⚡ Millisecond Multi-Dimensional Search
 - Instant fuzzy/exact search across **Name**, **Phone (supports last 4 digits)**, **Bib / Badge ID**, and **Personal ID**.

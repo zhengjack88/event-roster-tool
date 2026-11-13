@@ -1,4 +1,4 @@
-const CACHE_NAME = 'roster-tool-v2.2';
+const CACHE_NAME = 'roster-tool-v2.3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

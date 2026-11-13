@@ -415,6 +415,13 @@
       <input type="file" id="csv-file-input" accept=".csv,text/csv" class="form-input" onchange="handleCsvFile(event)">
     </div>
     <div id="csv-encoding-hint"></div>
+    <div style="border-top: 1px dashed #e2e8f0; margin-top: 12px; padding-top: 12px;">
+      <button type="button" class="btn-submit btn-purple" style="margin-top: 0;" onclick="triggerHtmlImport()">📄 Import from HTML File</button>
+      <input type="file" id="html-file-input" accept=".html,text/html" style="display:none" onchange="handleHtmlImportFile(event)">
+      <div style="font-size: 12px; color: #64748b; margin-top: 6px; line-height: 1.4;">
+        Select an HTML file exported by this tool (the one downloaded from WeChat/QQ to your phone). The file is read locally in your browser and is never uploaded to any server. iPhone users: save the file from WeChat/QQ to the "Files" app first, then come back here and tap above to select it.
+      </div>
+    </div>
     <div id="csv-mapping-area" style="display: none; margin-top: 14px;">
       <div style="font-weight: 700; font-size: 13px; color: #1e293b; margin-bottom: 8px;">Map Spreadsheet Columns:</div>
       <div class="form-group">
@@ -542,7 +549,7 @@
 <div id="site-footer" style="text-align:center; padding: 20px 12px 30px; font-size:0.8rem; color:#64748b; line-height: 1.6;">
   <span>🎗️ Free for all sports events, non-profits, and volunteer organizations · 100% Local Privacy</span><br>
   <span style="font-size:0.72rem; color:#94a3b8;">If this tool assists your operations, a volunteer certificate of honor is sincerely appreciated.</span><br>
-  <span id="version-label" style="font-size:0.7rem; color:#cbd5e1;">v2.2</span>
+  <span id="version-label" style="font-size:0.7rem; color:#cbd5e1;">v2.3</span>
 </div>
 
 <!-- Embedded Core Compression & QR Code Libraries -->
@@ -573,8 +580,8 @@ const CUSTOM_DATA_KEY = 'event_roster_custom_data_v2';
 const STAGED_KEY = 'event_roster_staged_v2';
 const HISTORY_KEY = 'event_roster_history_v2';
 
-// ===== Version & Shared Limits (v2.2) =====
-const APP_VERSION = 'v2.2';
+// ===== Version & Shared Limits (v2.3) =====
+const APP_VERSION = 'v2.3';
 const QR_MAX_PAYLOAD_CHARS = 2000;   // Conservative QR ceiling (EC level M, version 40); above this we fall back to HTML export
 const MAX_RENDERED_CARDS = 60;       // Cards drawn per result view (on-site rendering performance)
 const BACKUP_KEYS = [CUSTOM_DATA_KEY, DOC_RECORDS_KEY, DOC_SETTING_KEY, HISTORY_KEY, STAGED_KEY];
@@ -588,7 +595,26 @@ let printPending = false;
 
 
 // ===== Paper Document Sign-off Logic =====
-// ===== v2.2: JSON helpers =====
+// ===== v2.2: JSON & HTML safety helpers =====
+function escapeHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escapeJsArg(str) {
+  return escapeHtml(
+    String(str == null ? '' : str)
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'")
+      .replace(/\r/g, '\\r')
+      .replace(/\n/g, '\\n')
+  );
+}
+
 function parseJsonSafe(raw, fallback) {
   if (raw === null || raw === undefined || raw === '') return fallback;
   try {
@@ -732,6 +758,163 @@ function handleRestoreFile(e) {
   };
   reader.onerror = function() {
     alert('Unable to read the backup file.');
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+// ===== Import from Exported HTML File (v2.3) =====
+function triggerHtmlImport() {
+  const input = document.getElementById('html-file-input');
+  if (!input) return;
+  input.value = '';
+  input.click();
+}
+
+function extractPreloadedJsonText(sourceText, varName) {
+  const re = new RegExp('window\\.' + varName + '\\s*=\\s*([\\s\\S]*?);\\s*(?=\\r?\\n|$|window\\.__|<\\/script>)');
+  const m = sourceText.match(re);
+  return m ? m[1].trim() : null;
+}
+
+function handleHtmlImportFile(e) {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const htmlText = typeof evt.target.result === 'string' ? evt.target.result : '';
+
+    if (!htmlText.includes('preloaded-data-script') && !htmlText.includes('__PRELOADED_ROSTER__')) {
+      alert('This is not an HTML file exported by this tool. Please choose a file created with "Export Standalone HTML" or "Export Station HTML".');
+      return;
+    }
+
+    const scriptMatch = htmlText.match(/<script\b[^>]*\bid=["']?preloaded-data-script["']?[^>]*>([\s\S]*?)<\/script>/i);
+    const dataBlock = scriptMatch ? scriptMatch[1] : htmlText;
+
+    const rawRoster = extractPreloadedJsonText(dataBlock, '__PRELOADED_ROSTER__');
+    const rawGroup = extractPreloadedJsonText(dataBlock, '__DEFAULT_GROUP__');
+    const rawDocSetting = extractPreloadedJsonText(dataBlock, '__PRELOADED_DOC_SETTING__');
+    const rawDocRecords = extractPreloadedJsonText(dataBlock, '__PRELOADED_DOC_RECORDS__');
+
+    if (rawRoster === null) {
+      alert('This is not an HTML file exported by this tool. Please choose a file created with "Export Standalone HTML" or "Export Station HTML".');
+      return;
+    }
+
+    let parsedRoster, parsedGroup = null, parsedDocSetting = null, parsedDocRecords = null;
+    try {
+      parsedRoster = JSON.parse(rawRoster);
+      if (rawGroup !== null) parsedGroup = JSON.parse(rawGroup);
+      if (rawDocSetting !== null) parsedDocSetting = JSON.parse(rawDocSetting);
+      if (rawDocRecords !== null) parsedDocRecords = JSON.parse(rawDocRecords);
+    } catch (err) {
+      alert('The file is corrupted and the roster could not be read.');
+      return;
+    }
+
+    if (parsedRoster === null) {
+      alert('This HTML file does not contain an exported roster. Please use a file created with "Export Standalone HTML" or "Export Station HTML".');
+      return;
+    }
+    if (!Array.isArray(parsedRoster)) {
+      alert('The file is corrupted and the roster could not be read.');
+      return;
+    }
+    if (parsedRoster.length === 0) {
+      alert('The roster in this HTML file is empty.');
+      return;
+    }
+
+    const validRoster = [];
+    let skippedNoBib = 0;
+    for (let i = 0; i < parsedRoster.length; i++) {
+      const item = parsedRoster[i];
+      if (!item || typeof item !== 'object' || Array.isArray(item) || !Object.prototype.hasOwnProperty.call(item, 'name')) {
+        alert('The file is corrupted and the roster could not be read.');
+        return;
+      }
+      const bibStr = (item.bib !== undefined && item.bib !== null) ? String(item.bib).trim() : '';
+      if (!bibStr) {
+        skippedNoBib++;
+        continue;
+      }
+      validRoster.push({
+        name: (item.name !== undefined && item.name !== null) ? String(item.name) : '',
+        bib: bibStr,
+        group: (item.group !== undefined && item.group !== null) ? String(item.group) : '',
+        phone: (item.phone !== undefined && item.phone !== null) ? String(item.phone) : '',
+        id: (item.id !== undefined && item.id !== null) ? String(item.id) : '',
+        size: (item.size !== undefined && item.size !== null) ? String(item.size) : ''
+      });
+    }
+
+    if (validRoster.length === 0) {
+      alert('No valid entries with a bib/ID number were found in this HTML file.');
+      return;
+    }
+
+    const nextGroup = (typeof parsedGroup === 'string' && parsedGroup.length > 0) ? parsedGroup : null;
+    const nextDocSetting = (parsedDocSetting && typeof parsedDocSetting === 'object' && !Array.isArray(parsedDocSetting))
+      ? { enabled: !!parsedDocSetting.enabled, name: parsedDocSetting.name ? String(parsedDocSetting.name).trim() : 'Gear Receipt Form' }
+      : { enabled: false, name: 'Gear Receipt Form' };
+
+    const nextDocRecords = {};
+    if (parsedDocRecords && typeof parsedDocRecords === 'object' && !Array.isArray(parsedDocRecords)) {
+      Object.keys(parsedDocRecords).forEach(bib => {
+        const rec = parsedDocRecords[bib];
+        if (rec && typeof rec === 'object' && rec.signed) {
+          nextDocRecords[bib] = { signed: true, time: rec.time ? String(rec.time) : '' };
+        }
+      });
+    }
+    const syncedSignCount = Object.keys(nextDocRecords).length;
+
+    if (roster.length > 0) {
+      const ok = confirm(
+        'You currently have {n} people in the roster. Importing will replace them with {m} people from this file. Continue?'
+          .replace('{n}', roster.length)
+          .replace('{m}', validRoster.length)
+      );
+      if (!ok) return;
+    }
+
+    try {
+      localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(validRoster));
+    } catch (err2) {
+      alert('Import failed: local storage is full or unavailable. ' + (err2 && err2.message ? err2.message : err2));
+      return;
+    }
+
+    roster = validRoster;
+    activeGroup = nextGroup;
+    activeSize = null;
+    activeDocFilter = 'all';
+
+    applyDocPayload({
+      docSetting: nextDocSetting,
+      docRecords: nextDocRecords
+    });
+    closeCsvModal();
+    renderStaged();
+    renderHistory();
+    renderGroupBanner();
+    renderSizeFacetBar();
+    search();
+
+    let msg = 'Imported {n} {people}'
+      .replace('{n}', roster.length)
+      .replace('{people}', roster.length === 1 ? 'person' : 'people');
+    if (activeGroup) msg += ' (Group: {g})'.replace('{g}', activeGroup);
+    msg += ', {x} sign-off record(s) synced.'.replace('{x}', syncedSignCount);
+    if (skippedNoBib > 0) {
+      msg += '\nSkipped {m} row(s) without a bib/ID number.'.replace('{m}', skippedNoBib);
+    }
+    alert(msg);
+  };
+  reader.onerror = function() {
+    alert('Unable to read this HTML file.');
   };
   reader.readAsText(file, 'utf-8');
 }
@@ -958,7 +1141,7 @@ function updateDocSignBar() {
   const unsignedCount = currentScopedList.length - signedCount;
   const summaryElem = document.getElementById('doc-stat-summary');
   if (summaryElem) {
-    summaryElem.innerHTML = `📋 <strong>${docSetting.name || 'Document'}</strong>: <span style="color:#15803d">${signedCount} Signed</span> / <span style="color:#b45309">${unsignedCount} Pending</span>`;
+    summaryElem.innerHTML = `📋 <strong>${escapeHtml(docSetting.name || 'Document')}</strong>: <span style="color:#15803d">${signedCount} Signed</span> / <span style="color:#b45309">${unsignedCount} Pending</span>`;
   }
 }
 
@@ -1398,11 +1581,11 @@ function renderResults(list, showAll) {
 
   container.innerHTML = visible.map(p => {
     const isStg = staged.includes(p.bib);
-    const groupBadge = p.group ? `<span class="group-pill">🏷️ ${p.group}</span>` : '';
+    const groupBadge = p.group ? `<span class="group-pill">🏷️ ${escapeHtml(p.group)}</span>` : '';
     const isDocSigned = docSignedRecords[p.bib] && docSignedRecords[p.bib].signed;
     const docSignBtn = docSetting.enabled ? `
-      <button class="btn-doc-sign ${isDocSigned ? 'signed' : 'unsigned'}" onclick="toggleDocSigned('${p.bib}')">
-        ${isDocSigned ? `✓ Signed (${docSignedRecords[p.bib].time || ''})` : `✍️ Sign ${docSetting.name || 'Doc'}`}
+      <button class="btn-doc-sign ${isDocSigned ? 'signed' : 'unsigned'}" onclick="toggleDocSigned('${escapeJsArg(p.bib)}')">
+        ${isDocSigned ? `✓ Signed (${escapeHtml(docSignedRecords[p.bib].time || '')})` : `✍️ Sign ${escapeHtml(docSetting.name || 'Doc')}`}
       </button>
     ` : '';
 
@@ -1410,24 +1593,24 @@ function renderResults(list, showAll) {
       <div class="card">
         <div class="card-top">
           <div class="name-box">
-            <span class="name">${p.name || 'Anonymous'}</span>
-            <span class="bib">${p.bib || ''}</span>
+            <span class="name">${escapeHtml(p.name || 'Anonymous')}</span>
+            <span class="bib">${escapeHtml(p.bib || '')}</span>
             ${groupBadge}
           </div>
-          <span class="badge">${p.size || 'Standard'}</span>
+          <span class="badge">${escapeHtml(p.size || 'Standard')}</span>
         </div>
         <div class="info-row">
           <span class="label">Phone</span>
-          <span class="val">${p.phone || '-'}</span>
+          <span class="val">${escapeHtml(p.phone || '-')}</span>
         </div>
         <div class="info-row">
           <span class="label">ID / Passport</span>
-          <span class="val">${p.id || '-'}</span>
+          <span class="val">${escapeHtml(p.id || '-')}</span>
         </div>
         <div class="action-bar">
-          <button class="clear-link" style="border:none;background:none;color:#ef4444;" onclick="deleteRecord('${p.bib}')">Delete</button>
+          <button class="clear-link" style="border:none;background:none;color:#ef4444;" onclick="deleteRecord('${escapeJsArg(p.bib)}')">Delete</button>
           ${docSignBtn}
-          <button class="btn-stage ${isStg ? 'btn-staged' : ''}" onclick="toggleStage('${p.bib}', '${p.name}')">
+          <button class="btn-stage ${isStg ? 'btn-staged' : ''}" onclick="toggleStage('${escapeJsArg(p.bib)}', '${escapeJsArg(p.name)}')">
             ${isStg ? 'Staged (Remove)' : 'Stage for Pickup'}
           </button>
         </div>
@@ -1465,8 +1648,8 @@ function renderStaged() {
     const displayName = item ? `${item.name} (${item.bib})` : bib;
     return `
       <span class="staged-item">
-        ${displayName}
-        <span class="del-btn" onclick="toggleStage('${bib}')">&times;</span>
+        ${escapeHtml(displayName)}
+        <span class="del-btn" onclick="toggleStage('${escapeJsArg(bib)}')">&times;</span>
       </span>
     `;
   }).join('');
@@ -1500,8 +1683,8 @@ function renderHistory() {
   }
 
   container.innerHTML = history.map(item => `
-    <span class="tag" onclick="quickSearch('${item.bib}')">
-      ${item.name} (${item.bib})
+    <span class="tag" onclick="quickSearch('${escapeJsArg(item.bib)}')">
+      ${escapeHtml(item.name)} (${escapeHtml(item.bib)})
     </span>
   `).join('');
 }
@@ -1589,6 +1772,8 @@ function openCsvModal() {
 function closeCsvModal() {
   document.getElementById('csv-modal').classList.remove('active');
   document.getElementById('csv-file-input').value = '';
+  const htmlInput = document.getElementById('html-file-input');
+  if (htmlInput) htmlInput.value = '';
   document.getElementById('csv-mapping-area').style.display = 'none';
 }
 
