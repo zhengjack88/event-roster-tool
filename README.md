@@ -24,9 +24,14 @@
 
 ---
 
-## 🌟 Key Features (v2.3)
+## 🌟 Key Features (v2.3.1)
 
-### 0. 🆕 What's new in v2.3
+### 0. 🆕 What's new in v2.3.1
+- **CSV notes/remarks column mapping**: added an optional "Notes / Remarks" column (`map-note`, auto-matching `note / remark / memo / desc / 备注 / 说明`) during CSV import. Notes are only stored when non-empty and displayed on roster cards without bloating QR payloads for rosters without notes.
+- **Accurate duplicate-overwrite import summary**: `confirmCsvImport()` now reports newly added rows separately from bib-overwritten rows so the confirmation alert always matches the actual roster count.
+- **Localization & offline PWA fixes**: localized the Chinese QR modal title (`岗位核验入口` instead of `Station Check-In Entry`), added an inline SVG `<link rel="icon">` and `<meta name="mobile-web-app-capable" content="yes">` to eliminate console 404/deprecation warnings, and bumped the Service Worker cache to `roster-tool-v2.3.1`.
+
+#### Previous updates (v2.3)
 - **Import from exported HTML file**: a new "Import from HTML File" button in the data import dialog lets volunteers pick an HTML file previously exported by this tool (e.g. one downloaded from WeChat/QQ) and load its roster directly in the browser — no server involved, the file is only read locally. This solves the iOS problem where HTML files received in WeChat/QQ cannot be opened directly; iPhone users download the file to the Files app first, then import it here.
 
 #### Previous updates (v2.2)

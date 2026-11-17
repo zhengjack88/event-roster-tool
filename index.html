@@ -7,9 +7,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#2563eb">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="RosterCheck">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%232563eb'/%3E%3Ctext x='50' y='65' font-size='50' text-anchor='middle' fill='%23ffffff'%3E%F0%9F%93%8B%3C/text%3E%3C/svg%3E">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <title>Event Volunteer & Supply Verification Tool</title>
@@ -448,6 +450,10 @@
         <label class="form-label">Size / Gear Column</label>
         <select id="map-size" class="form-select"></select>
       </div>
+      <div class="form-group">
+        <label class="form-label">Notes / Remarks Column (Optional)</label>
+        <select id="map-note" class="form-select"></select>
+      </div>
       <button class="btn-submit btn-primary" onclick="confirmCsvImport()">Confirm & Save to Device</button>
     </div>
   </div>
@@ -549,7 +555,7 @@
 <div id="site-footer" style="text-align:center; padding: 20px 12px 30px; font-size:0.8rem; color:#64748b; line-height: 1.6;">
   <span>🎗️ Free for all sports events, non-profits, and volunteer organizations · 100% Local Privacy</span><br>
   <span style="font-size:0.72rem; color:#94a3b8;">If this tool assists your operations, a volunteer certificate of honor is sincerely appreciated.</span><br>
-  <span id="version-label" style="font-size:0.7rem; color:#cbd5e1;">v2.3</span>
+  <span id="version-label" style="font-size:0.7rem; color:#cbd5e1;">v2.3.1</span>
 </div>
 
 <!-- Embedded Core Compression & QR Code Libraries -->
@@ -580,8 +586,8 @@ const CUSTOM_DATA_KEY = 'event_roster_custom_data_v2';
 const STAGED_KEY = 'event_roster_staged_v2';
 const HISTORY_KEY = 'event_roster_history_v2';
 
-// ===== Version & Shared Limits (v2.3) =====
-const APP_VERSION = 'v2.3';
+// ===== Version & Shared Limits (v2.3.1) =====
+const APP_VERSION = 'v2.3.1';
 const QR_MAX_PAYLOAD_CHARS = 2000;   // Conservative QR ceiling (EC level M, version 40); above this we fall back to HTML export
 const MAX_RENDERED_CARDS = 60;       // Cards drawn per result view (on-site rendering performance)
 const BACKUP_KEYS = [CUSTOM_DATA_KEY, DOC_RECORDS_KEY, DOC_SETTING_KEY, HISTORY_KEY, STAGED_KEY];
@@ -1607,6 +1613,7 @@ function renderResults(list, showAll) {
           <span class="label">ID / Passport</span>
           <span class="val">${escapeHtml(p.id || '-')}</span>
         </div>
+        ${p.note ? `<div class="info-row"><span class="label">Notes</span><span class="val">${escapeHtml(p.note)}</span></div>` : ''}
         <div class="action-bar">
           <button class="clear-link" style="border:none;background:none;color:#ef4444;" onclick="deleteRecord('${escapeJsArg(p.bib)}')">Delete</button>
           ${docSignBtn}
@@ -1913,7 +1920,8 @@ function setupMappingSelects() {
     { id: 'map-group', match: ['station', 'group', 'team', 'role', 'dept', '分组', '岗位', '站点', '组别', '部门', '团队'] },
     { id: 'map-phone', match: ['phone', 'tel', 'mobile', 'cell', 'contact', '电话', '手机', '手机号', '联系电话'] },
     { id: 'map-id', match: ['passport', 'gov', 'identity', 'ssn', '身份证', '证件', '护照', '证件号'] },
-    { id: 'map-size', match: ['size', 'gear', 'shirt', 't-shirt', '尺码', '尺寸'] }
+    { id: 'map-size', match: ['size', 'gear', 'shirt', 't-shirt', '尺码', '尺寸'] },
+    { id: 'map-note', match: ['note', 'remark', 'memo', 'comment', 'desc', '备注', '说明', '职责', '职务'] }
   ];
 
   fields.forEach(f => {
@@ -1943,6 +1951,7 @@ function confirmCsvImport() {
   const phoneIdx = parseInt(document.getElementById('map-phone').value);
   const idIdx = parseInt(document.getElementById('map-id').value);
   const sizeIdx = parseInt(document.getElementById('map-size').value);
+  const noteIdx = parseInt(document.getElementById('map-note').value);
 
   if (nameIdx === -1 || bibIdx === -1) {
     alert('Name and Bib columns are required!');
@@ -1955,14 +1964,17 @@ function confirmCsvImport() {
     const name = (row[nameIdx] || '').trim();
     const bib = (row[bibIdx] || '').trim();
     if (!name && !bib) return;
-    incoming.push({
+    const note = noteIdx !== -1 ? (row[noteIdx] || '').trim() : '';
+    const rec = {
       name: name,
       bib: bib,
       group: groupIdx !== -1 ? (row[groupIdx] || '').trim() : '',
       phone: phoneIdx !== -1 ? (row[phoneIdx] || '').trim() : '',
       id: idIdx !== -1 ? (row[idIdx] || '').trim() : '',
       size: sizeIdx !== -1 ? (row[sizeIdx] || '').trim() : ''
-    });
+    };
+    if (note) rec.note = note;
+    incoming.push(rec);
   });
 
   if (incoming.length === 0) {
@@ -1994,22 +2006,27 @@ function confirmCsvImport() {
     if (!confirm(warn + '\nContinue with the import?')) return;
   }
 
-  let count = 0;
+  let addedCount = 0;
+  let updatedCount = 0;
   incoming.forEach(rec => {
     const existingIdx = roster.findIndex(x => x.bib === rec.bib);
     if (existingIdx > -1) {
       roster[existingIdx] = rec;
+      updatedCount++;
     } else {
       roster.push(rec);
+      addedCount++;
     }
-    count++;
   });
 
   localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(roster));
   closeCsvModal();
   renderSizeFacetBar();
   search();
-  alert('Successfully imported {n} entries into local device!'.replace('{n}', count));
+  const importMsg = updatedCount > 0
+    ? `Imported: ${addedCount} new, ${updatedCount} overwritten by bib (${roster.length} total).`
+    : `Successfully imported ${addedCount} entries into local device!`;
+  alert(importMsg);
 }
 
 function openDistributeModal() {
