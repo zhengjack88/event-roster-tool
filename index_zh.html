@@ -503,7 +503,7 @@
         <div class="overflow-text" id="qr-overflow-msg"></div>
         <button class="btn-export-fallback" onclick="exportFromQrModal()">📥 导出站点 HTML 文件</button>
       </div>
-      <p style="font-size: 13px; color: #475569; margin-top: 10px; font-weight: 600;" id="qr-tip-text">志愿者手机微信或相机扫一扫即可直接核验</p>
+      <p style="font-size: 13px; color: #475569; margin-top: 10px; font-weight: 600;" id="qr-tip-text">请使用手机相机或系统浏览器（Safari/Chrome）扫码核验</p>
       <input type="text" id="qr-url-input" class="form-input" readonly style="margin-top: 10px; font-size: 12px; color: #64748b;" onclick="this.select()">
       <button class="btn-submit btn-primary" id="qr-copy-btn" style="margin-top: 8px;" onclick="copyQrUrl()">📋 复制专属链接发微信群</button>
     </div>
@@ -2128,7 +2128,7 @@ function generateDistribution(groupEncoded, groupName) {
   box.style.display = 'inline-block';
   if (urlInput) { urlInput.value = targetUrl; urlInput.style.display = 'block'; }
   if (copyBtn) copyBtn.style.display = 'block';
-  if (tip) tip.textContent = '志愿者手机微信或相机扫一扫即可直接核验';
+  if (tip) tip.textContent = '请使用手机相机或系统浏览器（Safari/Chrome）扫码核验';
 
   try {
     new QRCode(box, {
