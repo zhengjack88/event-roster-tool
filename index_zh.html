@@ -397,6 +397,10 @@
       <label class="form-label">服装尺码 / 物资规格</label>
       <input type="text" id="new-size" class="form-input" placeholder="例如：L、XL、均码、双肩包">
     </div>
+    <div class="form-group">
+      <label class="form-label">备注 / 补充说明 (可选)</label>
+      <input type="text" id="new-note" class="form-input" placeholder="例如：组长 / 对讲机01">
+    </div>
     <button class="btn-submit" onclick="saveNewRecord()">保存并存入本地</button>
   </div>
 </div>
@@ -638,6 +642,44 @@ function safeJsonForScript(value) {
     .replace(/\u2029/g, '\\u2029');
 }
 
+function saveLocalSafe(key, value, silent) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (err) {
+    if (!silent) {
+      alert('本地存储空间不足（已超出浏览器配额），请先导出备份或清理无关缓存后再试。');
+    }
+    return false;
+  }
+}
+
+window.addEventListener('storage', (e) => {
+  if (!e || !e.key) return;
+  if (e.key === DOC_RECORDS_KEY) {
+    const next = parseJsonSafe(e.newValue, {});
+    docSignedRecords = (next && typeof next === 'object' && !Array.isArray(next)) ? next : {};
+    updateDocSignBar();
+    search();
+  } else if (e.key === DOC_SETTING_KEY) {
+    const next = parseJsonSafe(e.newValue, { enabled: false, name: '物资签收单' });
+    docSetting = (next && typeof next === 'object') ? next : { enabled: false, name: '物资签收单' };
+    syncDocControls();
+    search();
+  } else if (e.key === STAGED_KEY) {
+    const next = parseJsonSafe(e.newValue, []);
+    staged = Array.isArray(next) ? next : [];
+    renderStaged();
+    search();
+  } else if (e.key === CUSTOM_DATA_KEY) {
+    const next = parseJsonSafe(e.newValue, []);
+    roster = Array.isArray(next) ? next : [];
+    renderGroupBanner();
+    renderSizeFacetBar();
+    search();
+  }
+});
+
 // ===== Full backup & restore (P0-2) =====
 function exportBackup() {
   if (roster.length === 0 && Object.keys(docSignedRecords).length === 0) {
@@ -846,14 +888,17 @@ function handleHtmlImportFile(e) {
         skippedNoBib++;
         continue;
       }
-      validRoster.push({
+      const recObj = {
         name: (item.name !== undefined && item.name !== null) ? String(item.name) : '',
         bib: bibStr,
         group: (item.group !== undefined && item.group !== null) ? String(item.group) : '',
         phone: (item.phone !== undefined && item.phone !== null) ? String(item.phone) : '',
         id: (item.id !== undefined && item.id !== null) ? String(item.id) : '',
         size: (item.size !== undefined && item.size !== null) ? String(item.size) : ''
-      });
+      };
+      const noteStr = (item.note !== undefined && item.note !== null) ? String(item.note).trim() : '';
+      if (noteStr) recObj.note = noteStr;
+      validRoster.push(recObj);
     }
 
     if (validRoster.length === 0) {
@@ -1087,20 +1132,24 @@ function onToggleDocSetting(enabled) {
   docSetting.enabled = enabled;
   const wrap = document.getElementById('dist-doc-name-wrap');
   if (wrap) wrap.style.display = enabled ? 'flex' : 'none';
-  localStorage.setItem(DOC_SETTING_KEY, JSON.stringify(docSetting));
+  saveLocalSafe(DOC_SETTING_KEY, docSetting);
   updateDocSignBar();
   search();
 }
 
 function onDocNameChange(name) {
-  docSetting.name = name.trim() || '物资领取单';
-  localStorage.setItem(DOC_SETTING_KEY, JSON.stringify(docSetting));
+  docSetting.name = name.trim() || '物资签收单';
+  saveLocalSafe(DOC_SETTING_KEY, docSetting);
   updateDocSignBar();
   search();
 }
 
 function toggleDocSigned(bib) {
   if (!bib) return;
+  const latest = parseJsonSafe(localStorage.getItem(DOC_RECORDS_KEY), null);
+  if (latest && typeof latest === 'object' && !Array.isArray(latest)) {
+    docSignedRecords = latest;
+  }
   const current = docSignedRecords[bib];
   if (current && current.signed) {
     delete docSignedRecords[bib];
@@ -1110,7 +1159,7 @@ function toggleDocSigned(bib) {
       time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
     };
   }
-  localStorage.setItem(DOC_RECORDS_KEY, JSON.stringify(docSignedRecords));
+  saveLocalSafe(DOC_RECORDS_KEY, docSignedRecords);
   updateDocSignBar();
   search();
 }
@@ -1134,7 +1183,7 @@ function updateDocSignBar() {
   bar.style.display = 'flex';
 
   // 统计当前视图范围内的已签/未签
-  const currentScopedList = activeGroup ? roster.filter(p => p.group === activeGroup) : roster;
+  const currentScopedList = activeGroup ? roster.filter(p => (p.group || '未分组') === activeGroup) : roster;
   let signedCount = 0;
   currentScopedList.forEach(p => {
     if (docSignedRecords[p.bib] && docSignedRecords[p.bib].signed) {
@@ -1178,21 +1227,22 @@ function exportStandaloneHtml(groupEncoded, groupName) {
   const clone = document.documentElement.cloneNode(true);
   clone.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('active'));
 
-  let html = clone.outerHTML;
-
-  const scriptRegex = /<script id="preloaded-data-script">[\s\S]*?<\/script>/;
-  const newScript = `<script id="preloaded-data-script">
-    window.__PRELOADED_ROSTER__ = ${safeJsonForScript(payload.roster)};
-    window.__DEFAULT_GROUP__ = ${safeJsonForScript(targetGroup)};
-    window.__PRELOADED_DOC_SETTING__ = ${safeJsonForScript(payload.docSetting)};
-    window.__PRELOADED_DOC_RECORDS__ = ${safeJsonForScript(payload.docRecords)};
-  <\/script>`;
-
-  if (scriptRegex.test(html)) {
-    html = html.replace(scriptRegex, newScript);
+  const scriptPayload = `\n    window.__PRELOADED_ROSTER__ = ${safeJsonForScript(payload.roster)};\n    window.__DEFAULT_GROUP__ = ${safeJsonForScript(targetGroup)};\n    window.__PRELOADED_DOC_SETTING__ = ${safeJsonForScript(payload.docSetting)};\n    window.__PRELOADED_DOC_RECORDS__ = ${safeJsonForScript(payload.docRecords)};\n  `;
+  const existingScripts = clone.querySelectorAll('#preloaded-data-script');
+  if (existingScripts.length > 0) {
+    existingScripts[0].textContent = scriptPayload;
+    for (let i = 1; i < existingScripts.length; i++) {
+      existingScripts[i].remove();
+    }
   } else {
-    html = html.replace('</head>', newScript + '\n</head>');
+    const newScriptEl = clone.ownerDocument.createElement('script');
+    newScriptEl.id = 'preloaded-data-script';
+    newScriptEl.textContent = scriptPayload;
+    const head = clone.querySelector('head');
+    if (head) head.appendChild(newScriptEl);
   }
+
+  let html = clone.outerHTML;
 
   if (!html.startsWith('<!DOCTYPE html>')) {
     html = '<!DOCTYPE html>\n' + html;
@@ -1287,7 +1337,7 @@ function handleUrlParams() {
         if (importedData && importedData.length > 0) {
           // Direct local storage persistence (100% Client-Side)
           roster = importedData;
-          localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(importedData));
+          saveLocalSafe(CUSTOM_DATA_KEY, importedData);
           if (docPayload) applyDocPayload(docPayload);
           renderGroupBanner();
           renderSizeFacetBar();
@@ -1442,8 +1492,8 @@ function renderSizeFacetBar() {
   allSizes.forEach(s => {
     const isAct = activeSize === s;
     chipsHtml += `
-      <div class="size-chip ${isAct ? 'active' : ''}" onclick="selectSize('${s}')">
-        ${s} <span class="badge-count">${sizeMap[s]}</span>
+      <div class="size-chip ${isAct ? 'active' : ''}" onclick="selectSize('${escapeJsArg(s)}')">
+        ${escapeHtml(s)} <span class="badge-count">${sizeMap[s]}</span>
       </div>
     `;
   });
@@ -1637,7 +1687,7 @@ function toggleStage(bib, name) {
     staged.push(bib);
     addHistory(bib, name);
   }
-  localStorage.setItem(STAGED_KEY, JSON.stringify(staged));
+  saveLocalSafe(STAGED_KEY, staged, true);
   renderStaged();
   search();
 }
@@ -1667,7 +1717,7 @@ function renderStaged() {
 function clearStaged() {
   if (staged.length === 0) return;
   staged = [];
-  localStorage.setItem(STAGED_KEY, JSON.stringify(staged));
+  saveLocalSafe(STAGED_KEY, staged, true);
   renderStaged();
   search();
 }
@@ -1677,7 +1727,7 @@ function addHistory(bib, name) {
   history = history.filter(x => x.bib !== bib);
   history.unshift({ bib, name });
   if (history.length > 8) history.pop();
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  saveLocalSafe(HISTORY_KEY, history, true);
   renderHistory();
 }
 
@@ -1705,7 +1755,7 @@ function quickSearch(val) {
 
 function clearHistory() {
   history = [];
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  saveLocalSafe(HISTORY_KEY, history, true);
   renderHistory();
 }
 
@@ -1725,6 +1775,8 @@ function saveNewRecord() {
   const phone = document.getElementById('new-phone').value.trim();
   const id = document.getElementById('new-id').value.trim();
   const size = document.getElementById('new-size').value.trim();
+  const noteEl = document.getElementById('new-note');
+  const noteInput = noteEl ? noteEl.value.trim() : '';
 
   if (!name || !bib) {
     alert('请填写志愿者/选手的【姓名】和【编号/号码布】！');
@@ -1733,18 +1785,30 @@ function saveNewRecord() {
 
   const existingIdx = roster.findIndex(x => x.bib === bib);
   const newRec = { name, bib, group, phone, id, size };
+  const prevSnapshot = roster.slice();
 
   if (existingIdx > -1) {
     if (confirm(`编号 ${bib} 已存在，是否覆盖更新？`)) {
+      const prev = roster[existingIdx];
+      const finalNote = noteInput || (prev && prev.note ? prev.note : '');
+      if (finalNote) newRec.note = finalNote;
+      if (prev && prev.name !== name && docSignedRecords[bib]) {
+        delete docSignedRecords[bib];
+        saveLocalSafe(DOC_RECORDS_KEY, docSignedRecords, true);
+      }
       roster[existingIdx] = newRec;
     } else {
       return;
     }
   } else {
+    if (noteInput) newRec.note = noteInput;
     roster.unshift(newRec);
   }
 
-  localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(roster));
+  if (!saveLocalSafe(CUSTOM_DATA_KEY, roster)) {
+    roster = prevSnapshot;
+    return;
+  }
   closeAddModal();
   document.getElementById('new-name').value = '';
   document.getElementById('new-bib').value = '';
@@ -1752,6 +1816,7 @@ function saveNewRecord() {
   document.getElementById('new-phone').value = '';
   document.getElementById('new-id').value = '';
   document.getElementById('new-size').value = '';
+  if (noteEl) noteEl.value = '';
   
   renderSizeFacetBar();
   search();
@@ -1762,9 +1827,16 @@ function deleteRecord(bib) {
   if (confirm(`确定要删除编号为 ${bib} 的记录吗？`)) {
     roster = roster.filter(x => x.bib !== bib);
     staged = staged.filter(x => x !== bib);
-    localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(roster));
-    localStorage.setItem(STAGED_KEY, JSON.stringify(staged));
+    history = history.filter(x => x.bib !== bib);
+    if (docSignedRecords[bib]) {
+      delete docSignedRecords[bib];
+      saveLocalSafe(DOC_RECORDS_KEY, docSignedRecords, true);
+    }
+    saveLocalSafe(CUSTOM_DATA_KEY, roster);
+    saveLocalSafe(STAGED_KEY, staged, true);
+    saveLocalSafe(HISTORY_KEY, history, true);
     renderStaged();
+    renderHistory();
     renderSizeFacetBar();
     search();
   }
@@ -2008,20 +2080,42 @@ function confirmCsvImport() {
     if (!confirm(warn + '\n是否继续导入？')) return;
   }
 
+  const prevRoster = roster.slice();
+  const bibIndexMap = new Map();
+  roster.forEach((x, idx) => { if (x.bib) bibIndexMap.set(x.bib, idx); });
+
   let addedCount = 0;
   let updatedCount = 0;
+  let signCleared = false;
   incoming.forEach(rec => {
-    const existingIdx = roster.findIndex(x => x.bib === rec.bib);
+    const existingIdx = bibIndexMap.has(rec.bib) ? bibIndexMap.get(rec.bib) : -1;
     if (existingIdx > -1) {
+      const prev = roster[existingIdx];
+      if (prev && prev.name !== rec.name) {
+        if (docSignedRecords[rec.bib]) {
+          delete docSignedRecords[rec.bib];
+          signCleared = true;
+        }
+        history = history.filter(h => h.bib !== rec.bib);
+      }
       roster[existingIdx] = rec;
       updatedCount++;
     } else {
+      bibIndexMap.set(rec.bib, roster.length);
       roster.push(rec);
       addedCount++;
     }
   });
 
-  localStorage.setItem(CUSTOM_DATA_KEY, JSON.stringify(roster));
+  if (!saveLocalSafe(CUSTOM_DATA_KEY, roster)) {
+    roster = prevRoster;
+    return;
+  }
+  if (signCleared) {
+    saveLocalSafe(DOC_RECORDS_KEY, docSignedRecords, true);
+    saveLocalSafe(HISTORY_KEY, history, true);
+    renderHistory();
+  }
   closeCsvModal();
   renderSizeFacetBar();
   search();
@@ -2061,18 +2155,23 @@ function openDistributeModal() {
         <button class="btn-mini" style="background:#10b981; color:#fff; border-color:#10b981;" onclick="exportStandaloneHtml('', '全部完整名单')">📥 导出全量独立 HTML</button>
       </div>
     </div>
-  ` + groupKeys.map(g => `
+  ` + groupKeys.map(g => {
+    const safeG = escapeHtml(g);
+    const encG = escapeJsArg(encodeURIComponent(g));
+    const jsG = escapeJsArg(g);
+    return `
     <div class="dist-group-card">
       <div class="dist-group-header">
-        <span class="dist-group-title">🏷️ ${g}</span>
+        <span class="dist-group-title">🏷️ ${safeG}</span>
         <span class="dist-group-badge">共 ${groupsMap[g]} 人</span>
       </div>
       <div class="dist-actions" style="flex-wrap:wrap; gap:8px;">
-        <button class="btn-mini btn-mini-primary" onclick="generateDistribution('${encodeURIComponent(g)}', '${g}')">📱 专属码 / 链接</button>
-        <button class="btn-mini" style="background:#059669; color:#fff; border-color:#059669;" onclick="exportStandaloneHtml('${encodeURIComponent(g)}', '${g}')">📥 导出本组离线 HTML</button>
+        <button class="btn-mini btn-mini-primary" onclick="generateDistribution('${encG}', '${jsG}')">📱 专属码 / 链接</button>
+        <button class="btn-mini" style="background:#059669; color:#fff; border-color:#059669;" onclick="exportStandaloneHtml('${encG}', '${jsG}')">📥 导出本组离线 HTML</button>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   document.getElementById('dist-modal').classList.add('active');
 }
@@ -2103,8 +2202,13 @@ function generateDistribution(groupEncoded, groupName) {
   document.getElementById('qr-modal-title').textContent = `[${groupName}] 岗位核验入口`;
   box.innerHTML = '';
 
+  const targetUrl = groupEncoded
+    ? `${baseUrl}?group=${groupEncoded}&pkg=${compressed}`
+    : `${baseUrl}?pkg=${compressed}`;
+  const urlByteLen = new TextEncoder().encode(targetUrl).length;
+
   // Capacity guard: never hand qrcodejs a payload it cannot encode (P0-3)
-  if (compressed.length > QR_MAX_PAYLOAD_CHARS) {
+  if (compressed.length > QR_MAX_PAYLOAD_CHARS || urlByteLen > 2300) {
     if (overflowBox) overflowBox.style.display = 'block';
     if (overflowMsg) {
       overflowMsg.innerHTML = '该分组共 <strong>{n}</strong> 人，压缩后数据长度为 <strong>{len}</strong> 字符，已超出二维码容量上限（<strong>{limit}</strong>）。<br>请改用“导出站点 HTML 文件”的方式分发。'
@@ -2119,10 +2223,6 @@ function generateDistribution(groupEncoded, groupName) {
     document.getElementById('qr-modal').classList.add('active');
     return;
   }
-
-  const targetUrl = groupEncoded
-    ? `${baseUrl}?group=${groupEncoded}&pkg=${compressed}`
-    : `${baseUrl}?pkg=${compressed}`;
 
   if (overflowBox) overflowBox.style.display = 'none';
   box.style.display = 'inline-block';
